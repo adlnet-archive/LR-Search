@@ -9,8 +9,7 @@ object ApplicationBuild extends Build {
 
   val appDependencies = Seq(
     // Add your project dependencies here,
-    "net.databinder.dispatch" %% "dispatch-core" % "0.11.0",
-    "com.newrelic.agent.java" % "newrelic-api" % "2.x.x",
+    "net.databinder.dispatch" %% "dispatch-core" % "0.11.0",    
     "com.sksamuel.elastic4s" % "elastic4s_2.10" % "0.90.4.0-SNAPSHOT")
 
   val main = play.Project(appName, appVersion, appDependencies).settings(

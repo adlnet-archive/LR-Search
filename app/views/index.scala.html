@@ -1,7 +1,14 @@
 @import scala.collection.JavaConversions._
 @main("Learning Registry Search") {
 }{
-	<lrsearch searchUrl='/search'/>    
+	<div class="container">
+		<div class="jumbotron">
+			<lrsearch searchUrl='/search'/>
+		</div>
+	</div>
+	<div class="container">
+		<lrresults/>
+	</div>    
 }{
 	<script type="text/javascript" src="@routes.Assets.at("javascripts/search.js")"></script>
 }
