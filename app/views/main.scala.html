@@ -1,0 +1,21 @@
+@Html(com.newrelic.api.agent.NewRelic.getBrowserTimingHeader())
+@(title: String)(head: Html)(content: Html)(script: Html)
+
+<!DOCTYPE html>
+
+<html ng-app="search">
+    <head>
+        <title>@title</title>        
+        <meta name="viewport" content="width=device-width, initial-scale=1.0">        
+        <link rel="stylesheet" href="//netdna.bootstrapcdn.com/bootstrap/3.0.0/css/bootstrap.min.css"/>        
+        @head
+    </head>
+    <body>
+      @content
+      <script src="//code.jquery.com/jquery.js"></script>
+      <script src="//ajax.googleapis.com/ajax/libs/angularjs/1.0.8/angular.min.js"></script>
+      <script src="//netdna.bootstrapcdn.com/bootstrap/3.0.0/js/bootstrap.min.js"></script>
+      @script
+    </body>
+</html>
+@Html(com.newrelic.api.agent.NewRelic.getBrowserTimingFooter())
