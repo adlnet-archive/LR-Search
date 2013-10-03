@@ -2,12 +2,12 @@ angular
 		.module('search', [])
 		.service("searchService", function($rootScope, $http) {
 			return {
-				self: this,
+				self : this,
 				updating : false,
-				search : function(searchurl, query, page) {					
+				search : function(searchurl, query, page) {
 					if (!self.updating) {
 						self.updating = true;
-						$http.get(searchurl, {
+						$http.get(searchurl + '/search', {
 							params : {
 								terms : query,
 								page : page
@@ -15,10 +15,22 @@ angular
 						}).then(function(data) {
 							$rootScope.$broadcast("searchComplete", data.data);
 							self.updating = false;
-							
+
 						});
 					}
+				},
+				similiar : function(searchurl, docId, page) {
+					$http.get(searchurl + '/similiar/' + docId, {
+						params : {
+							page : page
+						}
+					}).then(function(data) {
+						$rootScope.$broadcast("searchComplete", data.data);
+						self.updating = false;
+
+					});
 				}
+
 			}
 		})
 		.directive(
@@ -30,10 +42,18 @@ angular
 						scope : {
 							searchUrl : "=searchUrl"
 						},
-						link : function($scope, $element, $attrs) {
-							$scope.searchurl = $attrs.searchurl
+						link : function($scope, $element, $attrs, searchService) {
+							var searchurl = $attrs.searchurl;
+							if (searchurl.charAt(searchurl.length - 1) === '/') {
+								searchurl = searchurl.slice(0,
+										searchurl.length - 1);
+							}
+							console.log(searchurl)
+							$scope.searchurl = searchurl
+							searchService.searchUrl = searchurl
 						},
 						controller : function($scope, searchService) {
+							searchService.searchUrl = $scope.searchurl
 							$(window)
 									.bind(
 											"scroll",
@@ -75,8 +95,12 @@ angular
 						transclude : true,
 						scope : {},
 						controller : function($scope, searchService) {
-							$scope.results = [], $scope
-									.$on('searchComplete',
+							$scope.results = [],
+							$scope.similiar = function(docId){
+								console.log(docId);
+								searchService.similiar("/similiar", docId)
+							},
+							$scope.$on('searchComplete',
 											function(e, args) {
 												angular.copy(args.data,
 														$scope.results);
@@ -85,6 +109,7 @@ angular
 						template : '<dl ng-repeat="result in results">'
 								+ '<dt><a href="{{result.url}}">{{result.title}}</a></dt>'
 								+ '<dd>'
+								+ '<a ng-click="similiar(result._id);" class="text-muted">similiar</a>'
 								+ '<p class="text-muted">{{result.url}}</p>'
 								+ '<p>{{result.description}}</p>' + '</dd>'
 								+ '</dl>'

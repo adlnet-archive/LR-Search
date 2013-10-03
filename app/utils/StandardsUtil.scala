@@ -3,18 +3,14 @@ import dispatch._
 import Defaults._
 import java.io.InputStream
 object StandardsUtil {
-  def standards(): Future[InputStream] = {
-    val std = url("http://localhost:5984/standards/_design/standards/_list/just-keys/all?reduce=false")
+  def standards(dbUrl: String)(): Future[InputStream] = {
+    val std = url(dbUrl) / "_design" / "standards" / "_list" / "just-keys" / "all" <<? Map("reduce" -> "false")
     val resp = Http(std)
-    for {
-      d <- resp
-    } yield d.getResponseBodyAsStream()
+    resp.map(d => d.getResponseBodyAsStream())
   }
-  def getStandard(standardId: String): Future[InputStream] = {
-    val std = url("http://localhost:5984/standards") / standardId
+  def getStandard(dbUrl: String)(standardId: String): Future[InputStream] = {
+    val std = url(dbUrl) / standardId
     val resp = Http(std)
-    for {
-      d <- resp
-    } yield d.getResponseBodyAsStream()
+    resp.map(d => d.getResponseBodyAsStream())
   }
 }

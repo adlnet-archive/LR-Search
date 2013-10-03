@@ -15,4 +15,12 @@ object Application extends Controller {
       Ok(views.html.index())
     }
   }
+  def cors() = Action {
+    Ok("").withHeaders(
+        "Access-Control-Allow-Origin" -> "*",
+        "Access-Control-Allow-Methods" -> "GET, POST, OPTIONS",
+        "Access-Control-Allow-Headers" -> "Content-Type, X-Requested-With, Accept",
+        "Access-Control-Max-Age" -> (60 * 60 * 24).toString
+        )
+  }  
 }

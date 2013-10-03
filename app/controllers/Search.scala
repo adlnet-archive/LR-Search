@@ -8,56 +8,50 @@ import play.api.mvc._
 import play.api.libs.concurrent.Execution.Implicits._
 import play.Logger
 import utils._
+import traits._
 import scala.collection.JavaConversions._
-object Search extends Controller {
-  def formatSearchResult(hit: SearchHit): JsValue = {
-    val tmp = hit.sourceAsMap()
-    Json.toJson(Map(
-      "_id" -> Json.toJson(hit.id()),
-      "title" -> Json.toJson(tmp.getOrElse("title", "").toString),
-      "publisher" -> Json.toJson(tmp.getOrElse("publisher", "").toString),
-      "description" -> Json.toJson(tmp.getOrElse("description", "").toString),
-      "hasScreenshot" -> Json.toJson(tmp.getOrElse("hasScreenshot", false).asInstanceOf[Boolean]),
-      "url" -> Json.toJson(tmp.getOrElse("url", "").toString)))
-  }
-  def search(terms: String, page: Option[Int]) = Action { request =>
+import com.sksamuel.elastic4s.ElasticClient
+object Search extends Controller with ESClient {
+  import play.api.Play.current
+  val url = Play.application.configuration.getString("couch.db.url").getOrElse("http://localhost:5984/standards")
+  def search(terms: String, page: Option[Int], filter: Option[String]) = Action { request =>
+    val parsedFilters = filter.map{str => 
+      str.split(";").toSeq
+    }
     if (terms != null) {
-      val result = SearchUtils.searchLR(terms, page.getOrElse(0))
+      val result = SearchUtils.searchLR(client)(terms, page.getOrElse(0), parsedFilters)
       Async {
         result.map(r => {
-          val data = r.getHits().hits().map(formatSearchResult)
-          Ok(Json.toJson(Map(
-            "count" -> Json.toJson(r.getHits().totalHits()),
-            "data" -> Json.toJson(data))))
+          r match {
+            case Some(js) => Ok(js)
+            case None => NotFound
+          }
         })
       }
     } else {
-      Ok(Json.toJson(
-        Map(
-          "count" -> Json.toJson(0),
-          "data" -> Json.toJson(Seq[JsValue]()))))
+      NotFound
     }
   }
   def similiar(id: String) = Action { request =>
-    val result = SearchUtils.similiar(id)
+    val result = SearchUtils.similiar(client)(id)
     Async {
-      result.map(r => {
-        val data = r.getHits().hits().map(formatSearchResult)
-        Ok(Json.toJson(Map(
-          "count" -> Json.toJson(r.getHits().totalHits()),
-          "data" -> Json.toJson(data))))
-      })
+      result.map { r =>
+        r match {
+          case Some(js) => Ok(js)
+          case None => NotFound
+        }
+      }
     }
   }
   def standards(standard: String, page: Option[Int] = None) = Action { request =>
-    val result = SearchUtils.standard(standard, page.getOrElse(0))
+    val result = SearchUtils.standard(client, url)(standard, page.getOrElse(0))
     Async {
-      result.map(r => {
-        val data = r.getHits().hits().map(formatSearchResult)
-        Ok(Json.toJson(Map(
-          "count" -> Json.toJson(r.getHits().totalHits()),
-          "data" -> Json.toJson(data))))
-      })
+      result.map { r =>
+        r match {
+          case Some(js) => Ok(js)
+          case None => NotFound
+        }
+      }
     }
   }
 }

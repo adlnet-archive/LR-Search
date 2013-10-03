@@ -9,6 +9,9 @@ import scala.concurrent._
 import scala.concurrent.duration._
 import scala.collection.JavaConversions._
 import org.apache.xml.serializer.ToSAXHandler
+import com.sksamuel.elastic4s.ElasticClient
+import play.api.libs.json.JsValue
+import play.api.libs.json.JsArray
 /**
  * Add your spec here.
  * You can mock out a whole application including requests, plugins etc.
@@ -34,32 +37,63 @@ class ApplicationSpec extends Specification {
     //      }
     //    }
     "search for results" in {
-        val results = SearchUtils.searchLR("organic chemistry", 0)
-        val result = Await.result(results, Duration(1000, MILLISECONDS))
-        result.getHits.totalHits() must beGreaterThan(0L)
+      val client = ElasticClient.remote("localhost", 9300)
+      val results = SearchUtils.searchLR(client)("organic chemistry", 0, None)
+      val result = Await.result(results, Duration(1000, MILLISECONDS))
+      result must beSome[JsValue]
+      client.close()
+    }
+    "search with accessMode filter" in {
+      var client = ElasticClient.remote("localhost", 9300)
+      var results = SearchUtils.searchLR(client)("math", 0, Some(List("tactile")))
+      val result = Await.result(results, Duration(1000, MILLISECONDS))
+      result must beSome[JsValue]
+      val jsResult = result.get
+      val accessModeValues: Seq[JsValue] = (jsResult \\ "accessMode")
+      accessModeValues.map(_.asInstanceOf[JsArray]).foreach { lst =>
+        val stringValues: Seq[String] = lst.value.map(_.as[String])
+        stringValues.map(_.toLowerCase()).exists(str => str == "tactile") must beTrue
+      }
+      client.close()
     }
     "search for standards" in {
-        val results = SearchUtils.standard("s1005356", 0)
-        val result = Await.result(results, Duration(1000, MILLISECONDS))
-        result.getHits.totalHits() must beGreaterThan(0L)
+      val client = ElasticClient.remote("localhost", 9300)
+      val url = "http://localhost:5984/standards"
+      val results = SearchUtils.standard(client, url)("s11434f5", 0)
+      val result = Await.result(results, Duration(1000, MILLISECONDS))
+      result must beSome[JsValue]
+      client.close()
     }
     "search for invalid standards" in {
-        val results = SearchUtils.standard("abc", 0)
-        val result = Await.result(results, Duration(1000, MILLISECONDS))
-        result.getHits.totalHits() must beEqualTo(0L)
-    }    
+      val client = ElasticClient.remote("localhost", 9300)
+      val url = "http://localhost:5984/standards"
+      val results = SearchUtils.standard(client, url)("abc", 0)
+      val result = Await.result(results, Duration(1000, MILLISECONDS))
+      result must beNone
+      client.close()
+    }
     "get document by id" in {
-    	val testId = "769665cf0106e08b90a09e75cb8c2b8e"	
-    	val results = SearchUtils.getDoc(testId)	
-    	val r = Await.result(results, Duration(1000, MILLISECONDS))
-    	r.isExists() must beTrue
-    	r.getId() must beEqualTo(testId).ignoreCase
+      val client = ElasticClient.remote("localhost", 9300)
+      val testId = "769665cf0106e08b90a09e75cb8c2b8e"
+      val results = DataUtils.doc(client)(testId)
+      val r = Await.result(results, Duration(1000, MILLISECONDS))
+      r must beSome[JsValue]
+      client.close()
     }
     "get document by invalid id" in {
-    	val testId = "abc"	
-    	val results = SearchUtils.getDoc(testId)	
-    	val r = Await.result(results, Duration(1000, MILLISECONDS))
-    	r.isExists() must beFalse
-    }    
+      val client = ElasticClient.remote("localhost", 9300)
+      val testId = "abc"
+      val results = DataUtils.doc(client)(testId)
+      val r = Await.result(results, Duration(1000, MILLISECONDS))
+      r must beNone
+      client.close()
+    }
+    "get count" in {
+      val client = ElasticClient.remote("localhost", 9300)
+      val results = DataUtils.data(client)()
+      val r = Await.result(results, Duration(1000, MILLISECONDS))
+      r.getCount() must beGreaterThan(0L)
+      client.close()
+    }
   }
 }
