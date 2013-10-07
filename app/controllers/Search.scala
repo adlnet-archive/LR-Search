@@ -16,20 +16,14 @@ object Search extends Controller with ESClient {
   val url = Play.application.configuration.getString("couch.db.url").getOrElse("http://localhost:5984/standards")
 
   def search(terms: String, page: Option[Int], filter: Option[String]) = Action.async { request =>
-    val parsedFilters = filter.map { str =>
-      str.split(";").toSeq
-    }
-    if (terms != null) {
-      val result = SearchUtils.searchLR(client)(terms, page.getOrElse(0), parsedFilters)
-      result.map(r => {
-        r match {
-          case Some(js) => Ok(js)
-          case None => NotFound
-        }
-      })
-    } else {
-      Future(NotFound)
-    }
+    val parsedFilters = filter.map(_.split(":").toSeq)
+    val result = SearchUtils.searchLR(client)(terms, page.getOrElse(0), parsedFilters)
+    result.map(r => {
+      r match {
+        case Some(js) => Ok(js)
+        case None => NotFound
+      }
+    })
   }
 
   def similiar(id: String) = Action.async { request =>

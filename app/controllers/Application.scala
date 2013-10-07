@@ -12,8 +12,7 @@ object Application extends Controller {
   def index = Action {
     Ok(views.html.index())
   }
-  def cors(junk: String) = Action {
-    
+  def cors(junk: String) = Action {    
     Ok("")
   }
 }

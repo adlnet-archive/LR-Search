@@ -16,21 +16,18 @@ object Data extends Controller with ESClient {
 
   def data() = Action.async { request =>
     val result = DataUtils.data(client)
-    result.map {
-      r =>
-        Ok(Json.toJson(Map(
-          "doc_count" -> Json.toJson(r.getCount()))))
+    result.map { r =>
+      Ok(Json.toJson(Map(
+        "doc_count" -> Json.toJson(r.getCount()))))
     }
   }
   def doc(docId: String) = Action.async { request =>
     val result = DataUtils.doc(client)(docId)
-    result.map {
-      r =>
-        r match {
-          case Some(js) => Ok(js)
-          case None => NotFound
-        }
+    result.map { r =>
+      r match {
+        case Some(js) => Ok(js)
+        case None => NotFound
+      }
     }
-
   }
 }

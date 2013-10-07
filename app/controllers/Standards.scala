@@ -12,7 +12,6 @@ object Standards extends Controller {
   import play.api.Play.current
   val url = Play.application.configuration.getString("couch.db.url").getOrElse("http://localhost:5984/standards")
   def standards() = Action.async { request =>
-
     val std = StandardsUtil.standards(url)()
     std.map { data =>
       val resp = Enumerator.fromStream(data)
