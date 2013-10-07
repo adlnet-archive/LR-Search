@@ -14,43 +14,39 @@ import com.sksamuel.elastic4s.ElasticClient
 object Search extends Controller with ESClient {
   import play.api.Play.current
   val url = Play.application.configuration.getString("couch.db.url").getOrElse("http://localhost:5984/standards")
-  def search(terms: String, page: Option[Int], filter: Option[String]) = Action { request =>
-    val parsedFilters = filter.map{str => 
+
+  def search(terms: String, page: Option[Int], filter: Option[String]) = Action.async { request =>
+    val parsedFilters = filter.map { str =>
       str.split(";").toSeq
     }
     if (terms != null) {
       val result = SearchUtils.searchLR(client)(terms, page.getOrElse(0), parsedFilters)
-      Async {
-        result.map(r => {
-          r match {
-            case Some(js) => Ok(js)
-            case None => NotFound
-          }
-        })
-      }
+      result.map(r => {
+        r match {
+          case Some(js) => Ok(js)
+          case None => NotFound
+        }
+      })
     } else {
-      NotFound
+      Future(NotFound)
     }
   }
-  def similiar(id: String) = Action { request =>
+
+  def similiar(id: String) = Action.async { request =>
     val result = SearchUtils.similiar(client)(id)
-    Async {
-      result.map { r =>
-        r match {
-          case Some(js) => Ok(js)
-          case None => NotFound
-        }
+    result.map { r =>
+      r match {
+        case Some(js) => Ok(js)
+        case None => NotFound
       }
     }
   }
-  def standards(standard: String, page: Option[Int] = None) = Action { request =>
+  def standards(standard: String, page: Option[Int] = None) = Action.async { request =>
     val result = SearchUtils.standard(client, url)(standard, page.getOrElse(0))
-    Async {
-      result.map { r =>
-        r match {
-          case Some(js) => Ok(js)
-          case None => NotFound
-        }
+    result.map { r =>
+      r match {
+        case Some(js) => Ok(js)
+        case None => NotFound
       }
     }
   }

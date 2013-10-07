@@ -14,6 +14,7 @@ trait ResultToJson {
         case _ => rawList.asInstanceOf[java.util.ArrayList[String]].toSeq
       }
     }
+    
     def convert(docId: String, tmp: java.util.Map[String, Object]) = {
       Some(Json.toJson(Map(
         "_id" -> Json.toJson(docId),
@@ -25,6 +26,7 @@ trait ResultToJson {
         "hasScreenshot" -> Json.toJson(tmp.getOrElse("hasScreenshot", false).asInstanceOf[Boolean]),
         "url" -> Json.toJson(tmp.getOrElse("url", "").toString))))
     }
+    
     resp match {
       case Left(r) => { convert(r.getId, r.getSource()) }
       case Right(r) => { if (r.isExists()) convert(docId, r.getSource()) else None }

@@ -11,8 +11,6 @@ GET       /similiar/:id                controllers.Search.similiar(id: String)
 GET       /standard/:standard          controllers.Search.standards(standard: String, page: Option[Int])
 GET       /new/standards/:standardId   controllers.Standards.standard(standardId: String)
 GET       /new/standards               controllers.Standards.standards
-OPTIONS   /new/standards               controllers.Application.cors
-OPTIONS   /search                      controllers.Application.cors
-
+OPTIONS   /*junk                           controllers.Application.cors(junk: String)
 # Map static resources from the /public folder to the /assets URL path
 GET       /assets/*file                controllers.Assets.at(path="/public", file)

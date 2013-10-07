@@ -13,8 +13,9 @@ object SearchUtils extends ResultToJson {
   val pageSize = 25
   def createQuery(termQuery: String, filters: Option[Seq[String]]): QueryDefinition = {
     def processedFilters(filters: Seq[String]) = {
-      filters.flatMap(f => List(termFilter("accessMode", f), termFilter("mediaFeatures", f)))
-    }    
+      //queryFilter(term("accessMode" -> f)), queryFilter(term("mediaFeatures" -> f)), 
+      filters.flatMap(f => List(termFilter("accessMode" -> f), queryFilter(matchQuery("mediaFeatures", f)), queryFilter(matchQuery("publisher", f))))
+    }
     val baseQuery = bool {
       should(
         matchPhrase("title", termQuery) boost 10 slop 3 cutoffFrequency 3.4 setLenient true,
