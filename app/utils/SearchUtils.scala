@@ -9,53 +9,52 @@ import dispatch._
 import play.api.libs.concurrent.Execution.Implicits.defaultContext
 import play.api.libs.json.JsValue
 import play.api.libs.json.Json
+import play.api.Logger
 object SearchUtils extends ResultToJson {
   val pageSize = 25
-  def createQuery(termQuery: String, filters: Option[Seq[String]]): QueryDefinition = {
-    def processedFilters(filters: Seq[String]) = {
-      //queryFilter(term("accessMode" -> f)), queryFilter(term("mediaFeatures" -> f)), 
-      filters.flatMap(f => List(termFilter("accessMode" -> f), queryFilter(matchQuery("mediaFeatures", f)), queryFilter(matchQuery("publisher", f))))
+  def createQuery(termQuery: Seq[String], filters: Option[Seq[String]]): QueryDefinition = {
+    def processedFilters(filters: Seq[String]) = { 
+      filters.flatMap(f => List(termFilter("accessMode" -> f), termFilter("mediaFeatures", f), queryFilter(matchQuery("publisher", f))))
     }
-    val baseQuery = bool {
-      should(
-        matchPhrase("title", termQuery) boost 10 slop 3 cutoffFrequency 3.4 setLenient true,
-        matchPhrase("description", termQuery) boost 5 slop 3 cutoffFrequency 3.4 setLenient true,
-        term("standards", termQuery),
-        term("keys", termQuery))
+    def baseQuery(termQuerys: Seq[String]) = bool {
+      val queries = termQuerys.flatMap{t =>
+	        List(matchPhrase("title", t) boost 10 slop 3 cutoffFrequency 3.4 setLenient true,
+	        matchPhrase("description", t) boost 5 slop 3 cutoffFrequency 3.4 setLenient true,
+	        term("standards", t),
+	        term("keys", t))        
+      }
+      should(queries:_*)
     }
     filters match {
       case Some(filters) =>
         filteredQuery query {
-          baseQuery
+          baseQuery(termQuery)
         } filter {
           should(processedFilters(filters): _*)
         }
-      case None => baseQuery
+      case None => baseQuery(termQuery)
     }
-  }
-  def searchLR(client: ElasticClient)(query: String, page: Int, filter: Option[Seq[String]]): Future[Option[JsValue]] = {
-    client.search(search in "lr" start (page * pageSize) limit pageSize query {
-      createQuery(query, filter)
-    }).map(format)
   }
   def similiar(client: ElasticClient)(docId: String): Future[Option[JsValue]] = {
     client.execute {
       morelike id docId in "lr/lr_doc" minTermFreq 1 percentTermsToMatch 0.2 minDocFreq 1
     }.map(format)
   }
-  def standard(client: ElasticClient, dbUrl: String)(standard: String, page: Int): Future[Option[JsValue]] = {
-    val svc = url(dbUrl) / "_design" / "standards" / "_list" / "just-keys" / "children" <<? Map("key" -> ("\"" + standard + "\""))
+  def searchLR(client: ElasticClient, dbUrl: String)(standard: String, page: Int, filter: Option[Seq[String]]): Future[Option[JsValue]] = {
+    val svc = url(dbUrl) / "_design" / "standards" / "_list" / "just-values" / "children" <<? Map("key" -> ("\"" + standard + "\""), "stale" -> "update_after")
     val resp = Http(svc OK as.String)
     resp.flatMap { result =>
-      val rawStandards = JSON.parseRaw(result)
+      val rawStandards = JSON.parseRaw(result)      
       val parsedStandards = rawStandards.map { x =>
-        x.asInstanceOf[JSONArray].list.map(s => term("standards", s.toString))
+        x.asInstanceOf[JSONArray].list.map(_.toString)
       }
+      Logger.debug(parsedStandards.mkString)
       parsedStandards match {
+        case Some(Nil) => client.search(search in "lr" start (page * pageSize) limit pageSize query {
+          createQuery(List(standard), filter)
+        }).map(format)
         case Some(s) => client.search(search in "lr" start (page * pageSize) limit pageSize query {
-          bool {
-            should(s: _*)
-          }
+          createQuery(s, filter)
         }).map(format)
         case None => Future(None)
       }

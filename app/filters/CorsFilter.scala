@@ -1,9 +1,11 @@
 package filters
 import play.api.mvc._
+import play.api.Logger
 import scala.concurrent.Future
 import play.api.libs.concurrent.Execution.Implicits.defaultContext
 object CorsFilter extends Filter {
   def apply(next: (RequestHeader) => Future[SimpleResult])(rh: RequestHeader): Future[SimpleResult] = {
+    Logger.debug(rh.uri)
     next(rh).map { response =>
       response.withHeaders(
         "Access-Control-Allow-Origin" -> "*",

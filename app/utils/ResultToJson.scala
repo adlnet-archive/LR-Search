@@ -23,7 +23,7 @@ trait ResultToJson {
         "description" -> Json.toJson(tmp.getOrElse("description", "").toString),
         "accessMode" -> Json.toJson(convertStringList(tmp, "accessMode")),
         "mediaFeatures" -> Json.toJson(convertStringList(tmp, "mediaFeatures")),
-        "hasScreenshot" -> Json.toJson(tmp.getOrElse("hasScreenshot", false).asInstanceOf[Boolean]),
+        "hasScreenshot" -> Json.toJson(true),
         "url" -> Json.toJson(tmp.getOrElse("url", "").toString))))
     }
     

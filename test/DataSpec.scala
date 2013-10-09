@@ -36,5 +36,16 @@ class DataSpec extends Specification {
       val data : CountResponse = Await.result(item, Duration(2, SECONDS))
       data.getCount() must beGreaterThan(targetCount)
     }
+    "Get multiple Docs" in {
+      val testId = List("32694a71ab9e3e38507b731670f93c5f", "769665cf0106e08b90a09e75cb8c2b8e", "2b23d4c9e18deea9220f5997b8fe4eb1")
+      val item = DataUtils.docs(client)(testId)
+      val rawDocs = Await.result(item, Duration(2, SECONDS))      
+      rawDocs must beSome[JsValue]
+      val docs = rawDocs.get
+      val count = docs \ "count"
+      val resultIds = (docs \\ "_id").map(_.as[String])      
+      count.as[Int] must beEqualTo(testId.length)
+      resultIds.foldLeft(true)((prev, next) => prev && testId.contains(next)) must beTrue
+    }
   }
 }

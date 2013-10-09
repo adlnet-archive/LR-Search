@@ -21,18 +21,18 @@ class ApplicationSpec extends Specification {
   val dbUrl = "http://localhost:5984/standards"
   "Application" should {
     "Search for term" in {
-      val result = SearchUtils.searchLR(client)("math", 0, None)
+      val result = SearchUtils.searchLR(client, dbUrl)("math", 0, None)
       val finalResult = Await result (result, Duration(2, SECONDS))
       finalResult must beSome[JsValue]
     }
     "Search for bad term" in {
-      val result = SearchUtils.searchLR(client)("super bad math", 0, None)
+      val result = SearchUtils.searchLR(client, dbUrl)("super bad math", 0, None)
       val finalResult = Await result (result, Duration(2, SECONDS))
       finalResult must beNone
     }
     "Search for term with accessMode filter" in {
       val term = "visual"
-      val result = SearchUtils.searchLR(client)("math", 0, Some(List(term)))
+      val result = SearchUtils.searchLR(client, dbUrl)("math", 0, Some(List(term)))
       val finalResult = Await result (result, Duration(2, SECONDS))
       finalResult must beSome[JsValue]
       val content = finalResult.get
@@ -44,7 +44,7 @@ class ApplicationSpec extends Specification {
     }
     "Search for term with mediaFeatures filter" in {
       val term = "test"
-      val result = SearchUtils.searchLR(client)("math", 0, Some(List(term)))
+      val result = SearchUtils.searchLR(client, dbUrl)("math", 0, Some(List(term)))
       val finalResult = Await result (result, Duration(2, SECONDS))
       finalResult must beSome[JsValue]
       val content = finalResult.get
@@ -56,7 +56,7 @@ class ApplicationSpec extends Specification {
     }
     "Search for term with publisher filter" in {
       val term = "Encyclopaedia Britannica, Incorporated"
-      val result = SearchUtils.searchLR(client)("time", 0, Some(List(term)))
+      val result = SearchUtils.searchLR(client, dbUrl)("time", 0, Some(List(term)))
       val finalResult = Await result (result, Duration(2, SECONDS))
       finalResult must beSome[JsValue]
       val content = finalResult.get
@@ -68,9 +68,15 @@ class ApplicationSpec extends Specification {
     }
     "Search for Standards" in {
       val standard = "s114360a"
-      val result = SearchUtils.standard(client, dbUrl)(standard, 0)
+      val result = SearchUtils.searchLR(client, dbUrl)(standard, 0, None)
       val finalResult = Await result (result, Duration(2, SECONDS))
       finalResult must beSome[JsValue]
     }
+    "Search for Standards Regular Term" in {
+      val standard = "math"
+      val result = SearchUtils.searchLR(client, dbUrl)(standard, 0, None)
+      val finalResult = Await result (result, Duration(2, SECONDS))
+      finalResult must beSome[JsValue]
+    }    
   }
 }
