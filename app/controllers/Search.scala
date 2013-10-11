@@ -16,7 +16,7 @@ object Search extends Controller with ESClient {
   import play.api.Play.current
   val url = Play.application.configuration.getString("couch.db.url").getOrElse("http://localhost:5984/standards")
 
-  def search(terms: String, page: Option[Int], filter: Option[String]) =
+  def search(terms: String, page: Option[Int], filter: Option[String]) = Cached(terms + page.getOrElse(0) + filter.getOrElse("")) {
     Action.async { request =>
       val parsedFilters: Option[Seq[String]] = filter.map(_.split(":"))
       val result = SearchUtils.searchLR(client, url)(terms, page.getOrElse(0), parsedFilters)
@@ -29,8 +29,8 @@ object Search extends Controller with ESClient {
         }
       })
     }
-
-  def similiar(id: String) =
+  }
+  def similiar(id: String) = Cached(id) {
     Action.async { request =>
       val result = SearchUtils.similiar(client)(id)
       result.map { r =>
@@ -42,5 +42,5 @@ object Search extends Controller with ESClient {
         }
       }
     }
-
+  }
 }

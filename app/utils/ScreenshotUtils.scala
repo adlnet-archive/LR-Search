@@ -24,9 +24,7 @@ object ScreenshotUtils {
               val currentLocation =System.getProperty("user.dir") 
               Logger.debug(currentLocation)
               val exec = s"xvfb-run --auto-servernum --server-num=1 python $currentLocation/screenshots.py $siteUrl $docId $dbUrl"                
-              Logger.debug(exec)
               val result = exec.!!
-              Logger.debug(exec)
               val std = url(dbUrl) / docId / "screenshot.jpeg"
               val resp = Http(std)
               resp.map(resp => Some(resp.getResponseBodyAsStream()))

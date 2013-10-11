@@ -26,7 +26,7 @@ class ApplicationSpec extends Specification {
       finalResult must beSome[JsValue]
     }
     "Search for bad term" in {
-      val result = SearchUtils.searchLR(client, dbUrl)("super bad math", 0, None)
+      val result = SearchUtils.searchLR(client, dbUrl)("aaaabbbbccaeged", 0, None)
       val finalResult = Await result (result, Duration(2, SECONDS))
       finalResult must beNone
     }
@@ -77,6 +77,6 @@ class ApplicationSpec extends Specification {
       val result = SearchUtils.searchLR(client, dbUrl)(standard, 0, None)
       val finalResult = Await result (result, Duration(2, SECONDS))
       finalResult must beSome[JsValue]
-    }    
+    }
   }
 }

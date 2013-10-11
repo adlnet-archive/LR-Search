@@ -14,24 +14,27 @@ import traits.ResultToJson
 object SearchUtils extends ResultToJson {
   val pageSize = 25
   def createQuery(termQuery: Seq[String], filters: Option[Seq[String]]): QueryDefinition = {
-    def processedFilters(filters: Seq[String]) = { 
+    def processedFilters(filters: Seq[String]) = {
       filters.flatMap(f => List(termFilter("accessMode" -> f), termFilter("mediaFeatures", f), queryFilter(matchQuery("publisher", f))))
     }
     def baseQuery(termQuerys: Seq[String]) = bool {
-      val queries = termQuerys.flatMap{t =>
-	        List(matchPhrase("title", t) boost 10 slop 3 cutoffFrequency 3.4 setLenient true,
-	        matchPhrase("description", t) boost 5 slop 3 cutoffFrequency 3.4 setLenient true,
-	        term("standards", t),
-	        term("keys", t))        
+      val queries = termQuerys.flatMap { t =>
+        List(
+          matchPhrase("title", t) boost 10 setLenient true,
+          matches("title", t) boost 7.5,
+          matchPhrase("description", t) boost 5 setLenient true,
+          matches("description", t) boost 2.5,
+          term("standards", t),
+          term("keys", t))
       }
-      should(queries:_*)
+      should(queries: _*)
     }
     filters match {
       case Some(filters) =>
         filteredQuery query {
           baseQuery(termQuery)
         } filter {
-          should(processedFilters(filters): _*)
+          should(processedFilters(filters):_*)
         }
       case None => baseQuery(termQuery)
     }
@@ -45,7 +48,7 @@ object SearchUtils extends ResultToJson {
     val svc = url(dbUrl) / "_design" / "standards" / "_list" / "just-values" / "children" <<? Map("key" -> ("\"" + standard + "\""), "stale" -> "update_after")
     val resp = Http(svc OK as.String)
     resp.flatMap { result =>
-      val rawStandards = JSON.parseRaw(result)      
+      val rawStandards = JSON.parseRaw(result)
       val parsedStandards = rawStandards.map { x =>
         x.asInstanceOf[JSONArray].list.map(_.toString)
       }
