@@ -13,18 +13,30 @@ object ScreenshotUtils {
   def getScreenshot(dbUrl: String, client: ElasticClient)(docId: String): Future[Option[InputStream]] = {
     val std = url(dbUrl) / docId / "screenshot.jpeg"
     val resp = Http(std)
-    Logger.debug(System.getProperty("user.dir"))
-    resp.map { d =>
+    resp.flatMap { d =>
       d.getStatusCode() match {
-        case 200 => Some(d.getResponseBodyAsStream())
+        case 200 => Future(Some(d.getResponseBodyAsStream()))
         case 404 =>
           val doc = client.get(get id docId from "lr/lr_doc")
-          val siteUrl = doc().getSource().get("url")
-          val exec = Seq("xvfb-run", "--auto-servernum", "--server-num=1", "python", "screenshots.py", siteUrl, docId, dbUrl).mkString(" ").mkString(" ").!!
-          val std = url(dbUrl) / docId / "screenshot.jpeg"
-          val resp = Await.result(Http(std), Duration(5, SECONDS))
-          Some(resp.getResponseBodyAsStream())
-        case _ => None
+          doc.flatMap { d =>
+            val siteUrl = d.getSource().get("url").asInstanceOf[String]
+            try {
+              val currentLocation =System.getProperty("user.dir") 
+              Logger.debug(currentLocation)
+              val exec = s"xvfb-run --auto-servernum --server-num=1 python $currentLocation/screenshots.py $siteUrl $docId $dbUrl"                
+              Logger.debug(exec)
+              val result = exec.!!
+              Logger.debug(exec)
+              val std = url(dbUrl) / docId / "screenshot.jpeg"
+              val resp = Http(std)
+              resp.map(resp => Some(resp.getResponseBodyAsStream()))
+            }catch {
+              case e:java.lang.RuntimeException =>
+                Logger.error("Error taking screenshot", e)
+                Future(None)
+            }
+          }
+        case _ => Future(None)
       }
     }
   }

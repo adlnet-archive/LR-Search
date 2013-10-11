@@ -109,6 +109,7 @@ angular
 						template : '<dl ng-repeat="result in results">'
 								+ '<dt><a href="{{result.url}}">{{result.title}}</a></dt>'
 								+ '<dd>'
+								+ '<img src="/screenshot/{{result._id}}"/>'
 								+ '<a ng-click="similiar(result._id);" class="text-muted">similiar</a>'
 								+ '<p class="text-muted">{{result.url}}</p>'
 								+ '<p>{{result.description}}</p>' + '</dd>'

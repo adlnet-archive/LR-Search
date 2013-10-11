@@ -15,6 +15,7 @@ import org.elasticsearch.search.SearchHit
 import scala.concurrent.{Await}
 import scala.concurrent.duration._
 import java.io.InputStream
+import traits.ResultToJson
 
 object DataUtils extends ResultToJson { 
   def data(client: ElasticClient)(): Future[CountResponse] = {
