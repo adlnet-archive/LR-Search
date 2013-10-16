@@ -20,26 +20,22 @@ object Search extends Controller with ESClient {
     Action.async { request =>
       val parsedFilters: Option[Seq[String]] = filter.map(_.split(":"))
       val result = SearchUtils.searchLR(client, url)(terms, page.getOrElse(0), parsedFilters)
-      result.map(r => {
-        r match {
-          case Some(js) => Ok(js)
-          case None => Ok(Json.toJson(Map(
-            "count" -> Json.toJson(0),
-            "data" -> Json.toJson(List[String]()))))
-        }
-      })
+      result.map {
+        case Some(js) => Ok(js)
+        case None => Ok(Json.toJson(Map(
+          "count" -> Json.toJson(0),
+          "data" -> Json.toJson(List[String]()))))
+      }
     }
   }
   def similiar(id: String) = Cached(id) {
     Action.async { request =>
       val result = SearchUtils.similiar(client)(id)
-      result.map { r =>
-        r match {
-          case Some(js) => Ok(js)
-          case None => Ok(Json.toJson(Map(
-            "count" -> Json.toJson(0),
-            "data" -> Json.toJson(List[String]()))))
-        }
+      result.map {
+        case Some(js) => Ok(js)
+        case None => Ok(Json.toJson(Map(
+          "count" -> Json.toJson(0),
+          "data" -> Json.toJson(List[String]()))))
       }
     }
   }

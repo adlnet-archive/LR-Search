@@ -4,6 +4,7 @@
 
 # Home page
 GET       /                            controllers.Application.index
+GET       /publisher/:publisher        controllers.Publishers.getResourcesByPublisher(publisher, page: Option[Int])
 GET       /data                        controllers.Data.data(keys: Option[String])
 GET       /data/:docId                 controllers.Data.doc(docId:String)
 GET       /search                      controllers.Search.search(terms: String, page: Option[Int], filter: Option[String])

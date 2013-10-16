@@ -15,7 +15,7 @@ object SearchUtils extends ResultToJson {
   val pageSize = 25
   def createQuery(termQuery: Seq[String], filters: Option[Seq[String]]): QueryDefinition = {
     def processedFilters(filters: Seq[String]) = {
-      filters.flatMap(f => List(termFilter("accessMode" -> f), termFilter("mediaFeatures", f), queryFilter(matchQuery("publisher", f))))
+      filters.flatMap(f => List(termFilter("accessMode" -> f), termFilter("mediaFeatures", f), queryFilter(matchPhrase("publisher", f))))
     }
     def baseQuery(termQuerys: Seq[String]) = bool {
       val queries = termQuerys.flatMap { t =>
@@ -25,7 +25,7 @@ object SearchUtils extends ResultToJson {
           matchPhrase("description", t) boost 5 setLenient true,
           matches("description", t) boost 2.5,
           term("standards", t),
-          term("keys", t))
+          matches("keys", t))
       }
       should(queries: _*)
     }
@@ -34,7 +34,7 @@ object SearchUtils extends ResultToJson {
         filteredQuery query {
           baseQuery(termQuery)
         } filter {
-          should(processedFilters(filters):_*)
+          should(processedFilters(filters): _*)
         }
       case None => baseQuery(termQuery)
     }
@@ -52,7 +52,6 @@ object SearchUtils extends ResultToJson {
       val parsedStandards = rawStandards.map { x =>
         x.asInstanceOf[JSONArray].list.map(_.toString)
       }
-      Logger.debug(parsedStandards.mkString)
       parsedStandards match {
         case Some(Nil) => client.search(search in "lr" start (page * pageSize) limit pageSize query {
           createQuery(List(standard), filter)
@@ -63,5 +62,10 @@ object SearchUtils extends ResultToJson {
         case None => Future(None)
       }
     }
+  }
+  def searchByPublisher(client: ElasticClient)(publisher: String, page: Int): Future[Option[JsValue]] = {
+    client.search(search in "lr" start (page * pageSize) limit pageSize query {
+        matchPhrase("publisher", publisher)
+    }).map(format)
   }
 }
