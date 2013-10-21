@@ -65,7 +65,7 @@ object SearchUtils extends ResultToJson {
   }
   def searchByPublisher(client: ElasticClient)(publisher: String, page: Int): Future[Option[JsValue]] = {
     client.search(search in "lr" start (page * pageSize) limit pageSize query {
-        matchPhrase("publisher", publisher)
+      matchPhrase("publisher", publisher)
     }).map(format)
   }
 }
