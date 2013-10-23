@@ -14,14 +14,16 @@ trait ResultToJson {
         case scala.collection.immutable.Nil => Seq()
         case _ => rawList.asInstanceOf[java.util.ArrayList[String]].toSeq
       }
+    }    
+    def convertString(obj: Object): String = {
+      if(obj == null) "" else obj.toString()
     }
-    
     def convert(docId: String, tmp: java.util.Map[String, Object]) = {
       Some(Json.toJson(Map(
         "_id" -> Json.toJson(docId),
-        "title" -> Json.toJson(tmp.getOrElse("title", "").toString),
-        "publisher" -> Json.toJson(tmp.getOrElse("publisher", "").toString),
-        "description" -> Json.toJson(tmp.getOrElse("description", "").toString),
+        "title" -> Json.toJson(convertString(tmp.getOrElse("title", ""))),
+        "publisher" -> Json.toJson(convertString(tmp.getOrElse("publisher", ""))),
+        "description" -> Json.toJson(convertString(tmp.getOrElse("description", ""))),
         "accessMode" -> Json.toJson(convertStringList(tmp, "accessMode")),
         "mediaFeatures" -> Json.toJson(convertStringList(tmp, "mediaFeatures")),
         "hasScreenshot" -> Json.toJson(true),

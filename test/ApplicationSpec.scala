@@ -45,7 +45,7 @@ class ApplicationSpec extends Specification {
       items.foldLeft(true)((prev, next) => prev && next.contains(term)) must beTrue
     }
     "Search for term with mediaFeatures filter" in {
-      val term = "test"
+      val term = "longDescription"
       val result = SearchUtils.searchLR(client, dbUrl)("math", 0, Some(List(term)))
       val finalResult = Await result (result, Duration(2, SECONDS))
       finalResult must beSome[JsValue]
@@ -55,6 +55,23 @@ class ApplicationSpec extends Specification {
         r.as[Seq[String]]
       }
       items.foldLeft(true)((prev, next) => prev && next.contains(term)) must beTrue
+    }
+    "Search for term with key filter" in {
+      val result = SearchUtils.searchLR(client, dbUrl)("Community Heroes", 0, Some(List("DAISY3")))
+      val finalResult = Await result (result, Duration(2, SECONDS))
+      finalResult must beSome[JsValue]
+      val content = finalResult.get
+      val keys = content \\ "keys"
+      val items = keys.map { r =>
+        r.as[String]
+      }
+      items.forall(x => x == "DAISY3") must beTrue      
+    }    
+    "Search for term with multiple filter" in {
+      val terms = List("Primary Doc", "DAISY")
+      val result = SearchUtils.searchLR(client, dbUrl)("math", 0, Some(terms))
+      val finalResult = Await result (result, Duration(2, SECONDS))
+      finalResult must beSome[JsValue]
     }
     "Search for term with publisher filter" in {
       val term = "Encyclopaedia Britannica, Incorporated"
@@ -84,11 +101,9 @@ class ApplicationSpec extends Specification {
       def minimum(i1: Int, i2: Int, i3: Int) = min(min(i1, i2), i3)
       def distance(s1: String, s2: String) = {
         val dist = Array.tabulate(s2.length + 1, s1.length + 1) { (j, i) => if (j == 0) i else if (i == 0) j else 0 }
-
         for (j <- 1 to s2.length; i <- 1 to s1.length)
           dist(j)(i) = if (s2.charAt(j - 1) == s1.charAt(i - 1)) dist(j - 1)(i - 1)
           else minimum(dist(j - 1)(i) + 1, dist(j)(i - 1) + 1, dist(j - 1)(i - 1) + 1)
-
         dist(s2.length)(s1.length)
       }
       val publisher = "Encyclopaedia Britannica, Incorporated"

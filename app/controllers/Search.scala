@@ -18,7 +18,7 @@ object Search extends Controller with ESClient {
 
   def search(terms: String, page: Option[Int], filter: Option[String]) = Cached(terms + page.getOrElse(0) + filter.getOrElse("")) {
     Action.async { request =>
-      val parsedFilters: Option[Seq[String]] = filter.map(_.split(":"))
+      val parsedFilters: Option[Seq[String]] = filter.map(_.split(";"))
       val result = SearchUtils.searchLR(client, url)(terms, page.getOrElse(0), parsedFilters)
       result.map {
         case Some(js) => Ok(js)

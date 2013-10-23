@@ -26,7 +26,10 @@ object Data extends Controller with ESClient {
           DataUtils.docs(client)(docs).map(result =>
             result match {
               case Some(js) => Ok(js)
-              case None => NotFound
+              case None => Ok(Json.toJson(Map(
+                  "count" -> Json.toJson(0),
+                  "data" -> Json.toJson(Seq[String]())
+                  )))
             })
         }
         case None => {
