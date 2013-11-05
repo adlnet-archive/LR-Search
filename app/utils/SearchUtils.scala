@@ -11,11 +11,16 @@ import play.api.libs.json.JsValue
 import play.api.libs.json.Json
 import play.api.Logger
 import traits.ResultToJson
+import play.api.Play
+case class SearchBoosts(val titlePhraseBoost: Int, val titleBoost: Int, val descriptionPhraseBoost: Int, val descriptionBoost: Int)
 object SearchUtils extends ResultToJson {
   val pageSize = 25
-  def createQuery(termQuery: Seq[String], filters: Option[Seq[String]]): QueryDefinition = {
+  import play.api.Play.current
+
+  def createQuery(termQuery: Seq[String], filters: Option[Seq[String]], boost: SearchBoosts): QueryDefinition = {
     def processedFilters(filters: Seq[String]) = {
-      filters.map(_.toLowerCase()).flatMap(f => List(queryFilter(matches("accessMode", f)),
+      filters.map(_.toLowerCase()).flatMap(f => List(
+        queryFilter(matches("accessMode", f)),
         queryFilter(matches("mediaFeatures", f)),
         queryFilter(matches("keys", f)),
         queryFilter(matchPhrase("publisher", f))))
@@ -23,10 +28,10 @@ object SearchUtils extends ResultToJson {
     def baseQuery(termQuerys: Seq[String]) = bool {
       val queries = termQuerys.flatMap { t =>
         List(
-          matchPhrase("title", t) boost 10 setLenient true,
-          matches("title", t) boost 7.5,
-          matchPhrase("description", t) boost 5 setLenient true,
-          matches("description", t) boost 2.5,
+          matchPhrase("title", t) boost boost.titlePhraseBoost setLenient true,
+          matches("title", t) boost boost.titleBoost,
+          matchPhrase("description", t) boost boost.descriptionPhraseBoost setLenient true,
+          matches("description", t) boost boost.descriptionBoost,
           term("standards", t),
           matches("keys", t))
       }
@@ -47,7 +52,8 @@ object SearchUtils extends ResultToJson {
       morelike id docId in "lr/lr_doc" minTermFreq 1 percentTermsToMatch 0.2 minDocFreq 1
     }.map(format)
   }
-  def searchLR(client: ElasticClient, dbUrl: String)(standard: String, page: Int, filter: Option[Seq[String]]): Future[Option[JsValue]] = {
+  def searchLR(client: ElasticClient, dbUrl: String, boost: SearchBoosts)(standard: String, page: Int, filter: Option[Seq[String]]): Future[Option[JsValue]] = {
+    Logger.debug(boost.titlePhraseBoost.toString)
     val svc = url(dbUrl) / "_design" / "standards" / "_list" / "just-values" / "children" <<? Map("key" -> ("\"" + standard + "\""), "stale" -> "update_after")
     val resp = Http(svc OK as.String)
     resp.flatMap { result =>
@@ -57,10 +63,10 @@ object SearchUtils extends ResultToJson {
       }
       parsedStandards match {
         case Some(Nil) => client.search(search in "lr" start (page * pageSize) limit pageSize query {
-          createQuery(List(standard), filter)
+          createQuery(List(standard), filter, boost)
         }).map(format)
         case Some(s) => client.search(search in "lr" start (page * pageSize) limit pageSize query {
-          createQuery(s, filter)
+          createQuery(s, filter, boost)
         }).map(format)
         case None => Future(None)
       }
