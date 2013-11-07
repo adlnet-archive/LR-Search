@@ -9,9 +9,11 @@ import scala.Array.canBuildFrom
 trait ResultToJson {
   def format(docId: String)(resp: Either[SearchHit, GetResponse]): Option[JsValue] = {
     def convertStringList(tmp: java.util.Map[String, Object], field: String): Seq[String] = {
-      val rawList = tmp.getOrElse(field, Seq())
+      val rawList = tmp.getOrElse(field, Seq())      
       rawList match {
         case scala.collection.immutable.Nil => Seq()
+        case s: Seq[String] => s
+        case s: String => List(s)
         case _ => rawList.asInstanceOf[java.util.ArrayList[String]].toSeq
       }
     }    
@@ -24,7 +26,7 @@ trait ResultToJson {
         "title" -> Json.toJson(convertString(tmp.getOrElse("title", ""))),
         "publisher" -> Json.toJson(convertString(tmp.getOrElse("publisher", ""))),
         "description" -> Json.toJson(convertString(tmp.getOrElse("description", ""))),
-        "accessMode" -> Json.toJson(convertStringList(tmp, "accessMode")),
+//        "accessMode" -> Json.toJson(convertStringList(tmp, "accessMode")),
         "mediaFeatures" -> Json.toJson(convertStringList(tmp, "mediaFeatures")),
         "hasScreenshot" -> Json.toJson(true),
         "url" -> Json.toJson(tmp.getOrElse("url", "").toString))))

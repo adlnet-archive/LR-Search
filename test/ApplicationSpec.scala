@@ -19,23 +19,79 @@ import play.Logger
  */
 @RunWith(classOf[JUnitRunner])
 class ApplicationSpec extends Specification {
-  val client = ElasticClient.remote("localhost", 9300)
+  val client = ElasticClient.local
+  for (i <- 1 until 5) {
+    client.sync.execute {
+      index into "lr/lr_doc" id ("8851143037d629a57579139adcf7600" + i) fields (
+        "title" -> ("title" + i),
+        "description" -> ("desc" + i),
+        "publisher" -> "",
+        "keys" -> List(for (j <- 1 until 3) yield ("key" + j)),
+        "mediaFeatures" -> List("longDescription"),
+        "accessMode" -> List("visual"),
+        "keys" -> List(),
+        "standards" -> List()
+      )
+    }
+  }
+  for (i <- 6 until 10) {
+    client.sync.execute {
+      index into "lr/lr_doc" id ("8851143037d629a57579139adcf7600" + i) fields (
+        "title" -> ("title" + i),
+        "description" -> ("desc" + i),
+        "publisher" -> "",
+        "keys" -> List(for (j <- 1 until 3) yield ("key" + j)),
+        "mediaFeatures" -> List("longDescription"),
+        "accessMode" -> List(),
+        "keys" -> List("DAISY3", "Primary Doc"),
+        "standards" -> List()
+      )
+    }
+  }
+  for (i <- 11 until 15) {
+    client.sync.execute {
+      index into "lr/lr_doc" id ("8851143037d629a57579139adcf7600" + i) fields (
+        "title" -> ("title" + i),
+        "description" -> ("desc" + i),
+        "publisher" -> "",
+        "keys" -> List(for (j <- 1 until 3) yield ("key" + j)),
+        "mediaFeatures" -> List("longDescription"),
+        "accessMode" -> List(),
+        "keys" -> List(),
+        "standards" -> List("s114360a")
+      )
+    }
+  }
+  for (i <- 16 until 20) {
+    client.sync.execute {
+      index into "lr/lr_doc" id ("8851143037d629a57579139adcf7600" + i) fields (
+        "title" -> ("title" + i),
+        "description" -> ("desc" + i),
+        "publisher" -> "Encyclopaedia Britannica, Incorporated",
+        "keys" -> List(for (j <- 1 until 3) yield ("key" + j)),
+        "mediaFeatures" -> List("longDescription"),
+        "accessMode" -> List(),
+        "keys" -> List(),
+        "standards" -> List()
+      )
+    }
+  }      
   val dbUrl = "http://localhost:5984/standards"
   val boost: SearchBoosts = SearchBoosts(5, 4, 3, 2)
   "Application" should {
     "Search for term" in {
-      val result = SearchUtils.searchLR(client, dbUrl,boost)("math", 0, None)
+      val result = SearchUtils.searchLR(client, dbUrl, boost)("title1", 0, None)
       val finalResult = Await result (result, Duration(2, SECONDS))
       finalResult must beSome[JsValue]
     }
     "Search for bad term" in {
-      val result = SearchUtils.searchLR(client, dbUrl,boost)("aaaabbbbccaeged", 0, None)
+      val result = SearchUtils.searchLR(client, dbUrl, boost)("aaaabbbbccaeged", 0, None)
       val finalResult = Await result (result, Duration(2, SECONDS))
       finalResult must beNone
     }
     "Search for term with accessMode filter" in {
       val term = "visual"
-      val result = SearchUtils.searchLR(client, dbUrl,boost)("math", 0, Some(List(term)))
+      val result = SearchUtils.searchLR(client, dbUrl, boost)("title1", 0, Some(List(term)))
       val finalResult = Await result (result, Duration(2, SECONDS))
       finalResult must beSome[JsValue]
       val content = finalResult.get
@@ -47,7 +103,7 @@ class ApplicationSpec extends Specification {
     }
     "Search for term with mediaFeatures filter" in {
       val term = "longDescription"
-      val result = SearchUtils.searchLR(client, dbUrl,boost)("math", 0, Some(List(term)))
+      val result = SearchUtils.searchLR(client, dbUrl, boost)("title11", 0, Some(List(term)))
       val finalResult = Await result (result, Duration(2, SECONDS))
       finalResult must beSome[JsValue]
       val content = finalResult.get
@@ -58,7 +114,7 @@ class ApplicationSpec extends Specification {
       items.foldLeft(true)((prev, next) => prev && next.contains(term)) must beTrue
     }
     "Search for term with key filter" in {
-      val result = SearchUtils.searchLR(client, dbUrl,boost)("Community Heroes", 0, Some(List("DAISY3")))
+      val result = SearchUtils.searchLR(client, dbUrl, boost)("title6", 0, Some(List("DAISY3")))
       val finalResult = Await result (result, Duration(2, SECONDS))
       finalResult must beSome[JsValue]
       val content = finalResult.get
@@ -69,14 +125,14 @@ class ApplicationSpec extends Specification {
       items.forall(x => x == "DAISY3") must beTrue
     }
     "Search for term with multiple filter" in {
-      val terms = List("Primary Doc", "DAISY")
-      val result = SearchUtils.searchLR(client, dbUrl,boost)("math", 0, Some(terms))
+      val terms = List("Primary Doc", "DAISY3")
+      val result = SearchUtils.searchLR(client, dbUrl, boost)("title6", 0, Some(terms))
       val finalResult = Await result (result, Duration(2, SECONDS))
       finalResult must beSome[JsValue]
     }
     "Search for term with publisher filter" in {
       val term = "Encyclopaedia Britannica, Incorporated"
-      val result = SearchUtils.searchLR(client, dbUrl,boost)("time", 0, Some(List(term)))
+      val result = SearchUtils.searchLR(client, dbUrl, boost)("time", 0, Some(List(term)))
       val finalResult = Await result (result, Duration(2, SECONDS))
       finalResult must beSome[JsValue]
       val content = finalResult.get
@@ -88,13 +144,13 @@ class ApplicationSpec extends Specification {
     }
     "Search for Standards" in {
       val standard = "s114360a"
-      val result = SearchUtils.searchLR(client, dbUrl,boost)(standard, 0, None)
+      val result = SearchUtils.searchLR(client, dbUrl, boost)(standard, 0, None)
       val finalResult = Await result (result, Duration(2, SECONDS))
       finalResult must beSome[JsValue]
     }
     "Search for Standards Regular Term" in {
-      val standard = "math"
-      val result = SearchUtils.searchLR(client, dbUrl,boost)(standard, 0, None)
+      val standard = "test1"
+      val result = SearchUtils.searchLR(client, dbUrl, boost)(standard, 0, None)
       val finalResult = Await result (result, Duration(2, SECONDS))
       finalResult must beSome[JsValue]
     }
