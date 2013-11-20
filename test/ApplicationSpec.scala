@@ -18,66 +18,48 @@ import play.Logger
  * For more information, consult the wiki.
  */
 @RunWith(classOf[JUnitRunner])
-class ApplicationSpec extends Specification {
-  val client = ElasticClient.local
-  for (i <- 1 until 5) {
-    client.sync.execute {
-      index into "lr/lr_doc" id ("8851143037d629a57579139adcf7600" + i) fields (
-        "title" -> ("title" + i),
-        "description" -> ("desc" + i),
-        "publisher" -> "",
-        "keys" -> List(for (j <- 1 until 3) yield ("key" + j)),
-        "mediaFeatures" -> List("longDescription"),
-        "accessMode" -> List("visual"),
-        "keys" -> List(),
-        "standards" -> List()
-      )
-    }
-  }
-  for (i <- 6 until 10) {
-    client.sync.execute {
-      index into "lr/lr_doc" id ("8851143037d629a57579139adcf7600" + i) fields (
-        "title" -> ("title" + i),
-        "description" -> ("desc" + i),
-        "publisher" -> "",
-        "keys" -> List(for (j <- 1 until 3) yield ("key" + j)),
-        "mediaFeatures" -> List("longDescription"),
-        "accessMode" -> List(),
-        "keys" -> List("DAISY3", "Primary Doc"),
-        "standards" -> List()
-      )
-    }
-  }
-  for (i <- 11 until 15) {
-    client.sync.execute {
-      index into "lr/lr_doc" id ("8851143037d629a57579139adcf7600" + i) fields (
-        "title" -> ("title" + i),
-        "description" -> ("desc" + i),
-        "publisher" -> "",
-        "keys" -> List(for (j <- 1 until 3) yield ("key" + j)),
-        "mediaFeatures" -> List("longDescription"),
-        "accessMode" -> List(),
-        "keys" -> List(),
-        "standards" -> List("s114360a")
-      )
-    }
-  }
-  for (i <- 16 until 20) {
-    client.sync.execute {
-      index into "lr/lr_doc" id ("8851143037d629a57579139adcf7600" + i) fields (
-        "title" -> ("title" + i),
-        "description" -> ("desc" + i),
-        "publisher" -> "Encyclopaedia Britannica, Incorporated",
-        "keys" -> List(for (j <- 1 until 3) yield ("key" + j)),
-        "mediaFeatures" -> List("longDescription"),
-        "accessMode" -> List(),
-        "keys" -> List(),
-        "standards" -> List()
-      )
-    }
-  }      
+class ApplicationSpec extends Specification with After {
   val dbUrl = "http://localhost:5984/standards"
   val boost: SearchBoosts = SearchBoosts(5, 4, 3, 2)
+  val client = ElasticClient.local
+  val indexName = "lr/lr_doc"
+  def generateMediaFeatures(i: Int) = {
+    if (i % 5 == 0) List("longDescription")
+    else List()
+  }
+  def generateAccessMode(i: Int) = {
+    if (i % 3 == 0) List("visual")
+    else List()
+  }
+  def generateKeys(i: Int) = {
+    if (i % 4 == 0) List(for (j <- 1 until i) yield ("key" + j))
+    else List()
+  }
+  def generateStandards(i: Int) = {
+    if (i % 6 == 0) List("s114360a")
+    else List()
+  }
+  def createDocument(i: Int) = {
+    Map(
+      "title" -> ("title" + i),
+      "description" -> ("desc" + i),
+      "publisher" -> "",
+      "keys" -> generateKeys(i),
+      "mediaFeatures" -> generateMediaFeatures(i),
+      "accessMode" -> generateAccessMode(i),
+      "standards" -> generateStandards(i))
+  }
+  for (i <- 1 until 20) {
+    client.sync.execute {
+      index into indexName id ("8851143037d629a57579139adcf7600" + i) fields (createDocument(i))
+    }
+  }
+
+  def after = {
+    val result = client.deleteIndex(indexName)
+    val finalResult = Await result (result, Duration(2, SECONDS))
+    println(finalResult.isAcknowledged())
+  }
   "Application" should {
     "Search for term" in {
       val result = SearchUtils.searchLR(client, dbUrl, boost)("title1", 0, None)
