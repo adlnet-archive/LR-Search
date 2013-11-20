@@ -14,19 +14,8 @@ import org.elasticsearch.action.count.CountResponse
 import org.specs2.specification.After
 import org.specs2.specification.Before
 @RunWith(classOf[JUnitRunner])
-class DataSpec extends Specification with After with Before {
-  val indexName = "lr/lr_doc"
-  val client = ElasticClient.local
-  def before = {
-    for (i <- 1 until 10) {
-      client.sync.execute { index into indexName id ("8851143037d629a57579139adcf7600" + i) fields { "title" -> ("test" + i) } }
-    }
-  }
-  def after = {
-    val result = client.deleteIndex(indexName)
-    val finalResult = Await result (result, Duration(2, SECONDS))
-    println(finalResult.isAcknowledged())
-  }
+class DataSpec extends Specification with PopulateAndClean with After with Before {
+
   "Data Utility" should {
     "Get Data for ID" in {
       val testId = "8851143037d629a57579139adcf76001"

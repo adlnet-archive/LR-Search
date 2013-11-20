@@ -12,54 +12,16 @@ import com.sksamuel.elastic4s.ElasticDsl._
 import com.sksamuel.elastic4s._
 import play.api.libs.json._
 import play.Logger
+import scala.util.Try
 /**
  * Add your spec here.
  * You can mock out a whole application including requests, plugins etc.
  * For more information, consult the wiki.
  */
 @RunWith(classOf[JUnitRunner])
-class ApplicationSpec extends Specification with After {
+class ApplicationSpec extends Specification with After with Before with PopulateAndClean{
   val dbUrl = "http://localhost:5984/standards"
   val boost: SearchBoosts = SearchBoosts(5, 4, 3, 2)
-  val client = ElasticClient.local
-  val indexName = "lr/lr_doc"
-  def generateMediaFeatures(i: Int) = {
-    if (i % 5 == 0) List("longDescription")
-    else List()
-  }
-  def generateAccessMode(i: Int) = {
-    if (i % 3 == 0) List("visual")
-    else List()
-  }
-  def generateKeys(i: Int) = {
-    if (i % 4 == 0) List(for (j <- 1 until i) yield ("key" + j))
-    else List()
-  }
-  def generateStandards(i: Int) = {
-    if (i % 6 == 0) List("s114360a")
-    else List()
-  }
-  def createDocument(i: Int) = {
-    Map(
-      "title" -> ("title" + i),
-      "description" -> ("desc" + i),
-      "publisher" -> "",
-      "keys" -> generateKeys(i),
-      "mediaFeatures" -> generateMediaFeatures(i),
-      "accessMode" -> generateAccessMode(i),
-      "standards" -> generateStandards(i))
-  }
-  for (i <- 1 until 20) {
-    client.sync.execute {
-      index into indexName id ("8851143037d629a57579139adcf7600" + i) fields (createDocument(i))
-    }
-  }
-
-  def after = {
-    val result = client.deleteIndex(indexName)
-    val finalResult = Await result (result, Duration(2, SECONDS))
-    println(finalResult.isAcknowledged())
-  }
   "Application" should {
     "Search for term" in {
       val result = SearchUtils.searchLR(client, dbUrl, boost)("title1", 0, None)
