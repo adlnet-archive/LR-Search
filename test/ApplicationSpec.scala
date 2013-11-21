@@ -13,6 +13,7 @@ import com.sksamuel.elastic4s._
 import play.api.libs.json._
 import play.Logger
 import scala.util.Try
+import org.elasticsearch.action.count.CountResponse
 /**
  * Add your spec here.
  * You can mock out a whole application including requests, plugins etc.
@@ -22,7 +23,7 @@ import scala.util.Try
 class ApplicationSpec extends Specification with After with Before with PopulateAndClean{
   val dbUrl = "http://localhost:5984/standards"
   val boost: SearchBoosts = SearchBoosts(5, 4, 3, 2)
-  "Application" should {
+  "Search Should" should {
     "Search for term" in {
       val result = SearchUtils.searchLR(client, dbUrl, boost)("title1", 0, None)
       val finalResult = Await result (result, Duration(2, SECONDS))
@@ -120,4 +121,38 @@ class ApplicationSpec extends Specification with After with Before with Populate
       items.foldLeft(true)((prev: Boolean, next: Int) => prev && next <= 1) must beTrue
     }
   }
+  "Data Utility" should {
+    "Get Data for ID" in {
+      val testId = "8851143037d629a57579139adcf76001"
+      val item = DataUtils.doc(client)(testId)
+      val doc = Await.result(item, Duration(2, SECONDS))
+      doc must beSome[JsValue]
+      val id = doc.map(x => x \ "_id").map(x => x.as[String])
+      id must beSome[String]
+      id.get must beEqualTo(testId)
+    }
+    "Get Data For Invalid Id" in {
+      val testId = "Nothing Has This ID"
+      val item = DataUtils.doc(client)(testId)
+      val doc = Await.result(item, Duration(2, SECONDS))
+      doc must beNone
+    }
+    "Get Data" in {
+      val item = DataUtils.data(client)()
+      val targetCount: Long = 0
+      val data: CountResponse = Await.result(item, Duration(2, SECONDS))
+      data.getCount() must beGreaterThan(targetCount)
+    }
+    "Get multiple Docs" in {
+      val testId = for (i <- 1 until 3) yield "8851143037d629a57579139adcf7600" + i
+      val item = DataUtils.docs(client)(testId)
+      val rawDocs = Await.result(item, Duration(2, SECONDS))
+      rawDocs must beSome[JsValue]
+      val docs = rawDocs.get
+      val count = docs \ "count"
+      val resultIds = (docs \\ "_id").map(_.as[String])
+      count.as[Int] must beEqualTo(testId.length)
+      resultIds.foldLeft(true)((prev, next) => prev && testId.contains(next)) must beTrue
+    }
+  }  
 }
