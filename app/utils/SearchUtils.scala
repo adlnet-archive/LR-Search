@@ -16,10 +16,9 @@ case class SearchBoosts(val titlePhraseBoost: Int, val titleBoost: Int, val desc
 object SearchUtils extends ResultToJson {
   val pageSize = 25
   import play.api.Play.current
-
   def createQuery(termQuery: Seq[String], filters: Option[Seq[String]], boost: SearchBoosts): QueryDefinition = {
     def processedFilters(filters: Seq[String]) = {
-      filters.map(_.toLowerCase()).flatMap(f => List(
+      filters.flatMap(f => List(
         queryFilter(matches("accessMode", f)),
         queryFilter(matches("mediaFeatures", f)),
         queryFilter(matches("keys", f)),
