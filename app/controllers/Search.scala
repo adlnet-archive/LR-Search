@@ -20,6 +20,7 @@ object Search extends Controller with ESClient {
   val descriptionBoost = Play.application.configuration.getInt("search.desc.boost").getOrElse(2)  
   val url = Play.application.configuration.getString("couch.db.url").getOrElse("http://localhost:5984/standards")
   val boost: SearchBoosts = SearchBoosts(titlePhraseBoost, titleBoost, descriptionPhraseBoot, descriptionPhraseBoot)
+  
   def search(terms: String, page: Option[Int], filter: Option[String]) = Cached(terms + page.getOrElse(0) + filter.getOrElse("")) {
     Action.async { request =>
       val parsedFilters: Option[Seq[String]] = filter.map(_.split(";"))
