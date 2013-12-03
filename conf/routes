@@ -12,6 +12,8 @@ GET       /similiar/:id                controllers.Search.similiar(id: String)
 GET       /new/standards/:standardId   controllers.Standards.standard(standardId: String)
 GET       /new/standards               controllers.Standards.standards
 GET       /screenshot/:docId           controllers.Screenshot.getScreenshot(docId: String)
+POST      /flagged                     controllers.FlagController.acceptFlag
+GET       /flagged                     controllers.FlagController.flaggedItems
 OPTIONS   /*junk                       controllers.Application.cors(junk: String)
 # Map static resources from the /public folder to the /assets URL path
 GET       /assets/*file                controllers.Assets.at(path="/public", file)

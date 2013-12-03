@@ -12,7 +12,6 @@ import play.api.cache.Cached
 object Standards extends Controller {
   import play.api.Play.current
   val url = Play.application.configuration.getString("couch.db.url").getOrElse("http://localhost:5984/standards")
-
   def standards() =
     Action.async { request =>
       val std = StandardsUtil.standards(url)()
@@ -32,5 +31,4 @@ object Standards extends Controller {
           body = Enumerator.fromStream(data, 256))
       }
     }
-
 }

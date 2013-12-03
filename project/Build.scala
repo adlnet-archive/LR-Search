@@ -10,6 +10,7 @@ object ApplicationBuild extends Build {
   val appDependencies = Seq(
     // Add your project dependencies here,
     cache,
+    "org.scala-lang.modules" %% "scala-async" % "0.9.0-M2",
     "net.databinder.dispatch" %% "dispatch-core" % "0.11.0",
     "com.sksamuel.elastic4s" % "elastic4s_2.10" % "0.90.5.2")
 
