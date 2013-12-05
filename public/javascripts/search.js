@@ -47,25 +47,12 @@ angular
 							if (searchurl.charAt(searchurl.length - 1) === '/') {
 								searchurl = searchurl.slice(0,
 										searchurl.length - 1);
-							}
-							console.log(searchurl)
+							}							
 							$scope.searchurl = searchurl
 							searchService.searchUrl = searchurl
 						},
 						controller : function($scope, searchService) {
 							searchService.searchUrl = $scope.searchurl
-							$(window)
-									.bind(
-											"scroll",
-											function() {
-												var nVScroll = document.documentElement.scrollTop
-														|| document.body.scrollTop;
-												var scrollHeight = document.documentElement.scrollHeight
-														|| document.body.scrollHeight;
-												if (((nVScroll / scrollHeight) * 100) >= 66.0) {
-													updateResults();
-												}
-											});
 							$scope.query = "";
 							$scope.page = 0;
 							var updateResults = function() {
@@ -96,10 +83,6 @@ angular
 						scope : {},
 						controller : function($scope, searchService) {
 							$scope.results = [],
-							$scope.similiar = function(docId){
-								console.log(docId);
-								searchService.similiar("/similiar", docId)
-							},
 							$scope.$on('searchComplete',
 											function(e, args) {
 												angular.copy(args.data,
@@ -109,8 +92,8 @@ angular
 						template : '<dl ng-repeat="result in results">'
 								+ '<dt><a href="{{result.url}}">{{result.title}}</a></dt>'
 								+ '<dd>'
-								+ '<img src="/screenshot/{{result._id}}"/>'
-								+ '<a ng-click="similiar(result._id);" class="text-muted">similiar</a>'
+								+ '<img src="/screenshot/{{result._id}}"/><br/>'
+								+ '<a href="/review/{{result._id}}" class="text-muted">Review</a>'
 								+ '<p class="text-muted">{{result.url}}</p>'
 								+ '<p>{{result.description}}</p>' + '</dd>'
 								+ '</dl>'
