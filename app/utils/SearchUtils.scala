@@ -22,12 +22,12 @@ class SearchUtils {
   import play.api.Play.current
   def createQuery(termQuery: Seq[String], filters: Option[Seq[String]]): QueryDefinition = {
     def processedFilters(filters: Seq[String]) = {
-      val accessFilters = queryFilter(must(filters.map(f => matches("accessMode", f)): _*))
-      val mediaFilters = queryFilter(must(filters.map(f => matches("mediaFeatures", f)): _*))
+      val filterQueries = filters.map(f => matches("accessMode", f)).toList 
+      val accessFilters = queryFilter(must(filterQueries: _*))
       val generalFilters = filters.flatMap(f => List(
         queryFilter(matches("keys", f)),
         queryFilter(matchPhrase("publisher", f)))).toList
-      mediaFilters :: (accessFilters :: generalFilters)
+      accessFilters :: generalFilters
     }
     def baseQuery(termQuerys: Seq[String]) = bool {
       val queries = termQuerys.flatMap { t =>
