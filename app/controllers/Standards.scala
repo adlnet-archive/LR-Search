@@ -9,23 +9,24 @@ import utils._
 import play.api.libs.iteratee.Enumerator
 import play.api.cache.Cached
 import traits.UrlFromConfig
-
+import scala.async.Async.{ async, await }
 object Standards extends Controller {
   val standardsUtil = new StandardsUtil with UrlFromConfig
   def standards() =
     Action.async { request =>
-      val std = standardsUtil.standards()
-      std.map { data =>
+      async {
+        val data = await { standardsUtil.standards() }
         SimpleResult(
           header = ResponseHeader(200, Map("Content-Type" -> "application/json")),
           body = Enumerator.fromStream(data, 256))
+
       }
     }
 
   def standard(standardId: String) =
     Action.async { request =>
-      val std = standardsUtil.getStandard(standardId)
-      std.map { data =>
+      async {
+        val data = await { standardsUtil.getStandard(standardId) }
         SimpleResult(
           header = ResponseHeader(200, Map("Content-Type" -> "application/json")),
           body = Enumerator.fromStream(data, 256))

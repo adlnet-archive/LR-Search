@@ -1,4 +1,5 @@
 package controllers
+import scala.async.Async.{ async, await }
 import org.elasticsearch.search.SearchHit
 import scala.concurrent._
 import org.elasticsearch.action.search.SearchResponse
@@ -21,19 +22,21 @@ object Search extends Controller {
   def search(terms: String, page: Option[Int], filter: Option[String]) = Cached(terms + page.getOrElse(0) + filter.getOrElse("")) {
     Action.async { request =>
       val parsedFilters: Option[Seq[String]] = filter.map(_.split(";"))
-      val result = searchUtil.searchLR(terms, page.getOrElse(0), parsedFilters)
-      result.map {
-        case Some(js) => Ok(js)
-        case None => emptyResult
+      async {
+        await { searchUtil.searchLR(terms, page.getOrElse(0), parsedFilters) } match {
+          case Some(js) => Ok(js)
+          case None => emptyResult
+        }
       }
     }
   }
   def similiar(id: String) = Cached(id) {
     Action.async { request =>
-      val result = searchUtil.similiar(id)
-      result.map {
-        case Some(js) => Ok(js)
-        case None => emptyResult
+      async {
+        await { searchUtil.similiar(id) } match {
+          case Some(js) => Ok(js)
+          case None => emptyResult
+        }
       }
     }
   }
