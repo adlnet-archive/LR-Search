@@ -5,19 +5,20 @@
 # Home page
 GET       /                            controllers.Application.index
 GET       /review                      controllers.Application.review
-GET       /review/:docId                      controllers.Application.reviewDocument(docId)
+GET       /review/:docId               controllers.Application.reviewDocument(docId)
 GET       /publisher/:publisher        controllers.Publishers.getResourcesByPublisher(publisher, page: Option[Int])
 GET       /data                        controllers.Data.data(keys: Option[String])
 GET       /data/:docId                 controllers.Data.doc(docId:String)
-GET       /search                      controllers.Search.search(terms: String, page: Option[Int], filter: Option[String])
+GET       /search                      controllers.Search.search(terms, page: Option[Int], filter: Option[String])
 GET       /similiar/:id                controllers.Search.similiar(id: String)
 GET       /new/standards/:standardId   controllers.Standards.standard(standardId: String)
 GET       /new/standards               controllers.Standards.standards
 GET       /screenshot/:docId           controllers.Screenshot.getScreenshot(docId: String)
-POST      /flagged                     controllers.FlagController.acceptFlag
-GET       /flagged                     controllers.FlagController.flaggedItems
-GET       /flagged/:docId                     controllers.FlagController.flagsForDoc(docId)
-GET       /flagged/reason/:reason                     controllers.FlagController.flagsReason(reason)
+POST      /flagged                     controllers.Flag.acceptFlag
+GET       /flagged                     controllers.Flag.flaggedItems
+GET       /flagged/docs                controllers.Flag.flaggedIds
+GET       /flagged/:docId              controllers.Flag.flagsForDoc(docId)
+GET       /flagged/reason/:reason      controllers.Flag.flagsReason(reason)
 OPTIONS   /*junk                       controllers.Application.cors(junk: String)
 # Map static resources from the /public folder to the /assets URL path
 GET       /assets/*file                controllers.Assets.at(path="/public", file)

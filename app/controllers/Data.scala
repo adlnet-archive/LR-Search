@@ -15,15 +15,16 @@ import org.elasticsearch.action.get.GetResponse
 import views.html.defaultpages.notFound
 import play.api.libs.iteratee.Enumerator
 import play.api.cache.Cached
-object Data extends Controller with ESClient {
-  val url = Play.application.configuration.getString("couchdb.db.metadata.url").getOrElse("http://localhost:5984/lr-data")
+object Data extends Controller {  
+  val dataUtil = new DataUtils with RemoteClientFromConfig with ResultToJson with UrlFromConfig
   def data(keys: Option[String]) = 
     Action.async { request =>
       keys match {
         case Some(docIds) => {
           val firstParse = java.net.URLDecoder.decode(docIds, "utf-8").replace("\\\"", "\"")
           val docs = Json.parse(firstParse).as[Seq[String]]
-          DataUtils.docs(client)(docs).map(result =>
+          Logger.debug(docs.toString)          
+          dataUtil.docs(docs).map(result =>
             result match {
               case Some(js) => Ok(js)
               case None => Ok(Json.toJson(Map(
@@ -33,7 +34,7 @@ object Data extends Controller with ESClient {
             })
         }
         case None => {
-          val result = DataUtils.data(client)
+          val result = dataUtil.data
           result.map { r =>
             Ok(Json.toJson(Map(
               "doc_count" -> Json.toJson(r.getCount()))))
@@ -46,7 +47,7 @@ object Data extends Controller with ESClient {
     Action.async { request =>
       docId.toLowerCase() match {
         case "sitemap" => {
-          val raw = DataUtils.docFromCouchdb(url)(docId)
+          val raw = dataUtil.docFromCouchdb(docId)
           raw.map { r =>
             SimpleResult(
               header = ResponseHeader(200, Map("Content-Type" -> "application/json")),
@@ -54,7 +55,7 @@ object Data extends Controller with ESClient {
           }
         }
         case _ => {
-          val result = DataUtils.doc(client)(docId)
+          val result = dataUtil.doc(docId)
           result.map { r =>
             r match {
               case Some(js) => Ok(js)

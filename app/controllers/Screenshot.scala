@@ -7,13 +7,12 @@ import play.api.libs.concurrent.Execution.Implicits._
 import play.Logger
 import utils._
 import play.api.libs.iteratee.Enumerator
-import traits.ESClient
+import traits._
 
-object Screenshot extends Controller with ESClient {
-  import play.api.Play.current
-  val url = Play.application.configuration.getString("couchdb.db.metadata.url").getOrElse("http://localhost:5984/lr-data")
+object Screenshot extends Controller {  
+  val screenShotUtil: ScreenshotUtils = new ScreenshotUtils with RemoteClientFromConfig with UrlFromConfig 
   def getScreenshot(docId: String) = Action.async { request =>
-    ScreenshotUtils.getScreenshot(url, client)(docId)
+    screenShotUtil.getScreenshot(docId)
       .map { data =>
         data match {
           case Some(d) => SimpleResult(

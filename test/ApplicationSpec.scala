@@ -22,7 +22,7 @@ import org.elasticsearch.action.count.CountResponse
 class ApplicationSpec extends Specification with After with Before with PopulateAndClean {
   val dbUrl = "http://localhost:5984/standards"
   val boost: SearchBoosts = SearchBoosts(5, 4, 3, 2)
-  "Search Should" should {
+//  "Search Should" should {
 //    "Search for term" in {
 //      val result = SearchUtils.searchLR(client, dbUrl, boost)("title1", 0, None)
 //      val finalResult = Await result (result, Duration(2, SECONDS))
@@ -33,17 +33,17 @@ class ApplicationSpec extends Specification with After with Before with Populate
 //      val finalResult = Await result (result, Duration(2, SECONDS))
 //      finalResult must beNone
 //    }
-    "Search for term with accessMode filter" in {
-      val result = SearchUtils.searchLR(client, dbUrl, boost)("title1", 0, Some(List(accessMode)))
-      val finalResult = Await result (result, Duration(2, SECONDS))
-      finalResult must beSome[JsValue]
-      val content = finalResult.get
-      val accessModes = content \\ "accessMode"
-      val items = accessModes.map { r =>
-        r.as[Seq[String]]
-      }
-      items.foldLeft(true)((prev, next) => prev && next.contains(accessMode)) must beTrue
-    }
+//    "Search for term with accessMode filter" in {
+//      val result = SearchUtils.searchLR(client, dbUrl, boost)("title1", 0, Some(List(accessMode)))
+//      val finalResult = Await result (result, Duration(2, SECONDS))
+//      finalResult must beSome[JsValue]
+//      val content = finalResult.get
+//      val accessModes = content \\ "accessMode"
+//      val items = accessModes.map { r =>
+//        r.as[Seq[String]]
+//      }
+//      items.foldLeft(true)((prev, next) => prev && next.contains(accessMode)) must beTrue
+//    }
 //    "Search for term with mediaFeatures filter" in {
 //      val result = SearchUtils.searchLR(client, dbUrl, boost)("title11", 0, Some(List(mediaFeature)))
 //      val finalResult = Await result (result, Duration(2, SECONDS))
@@ -150,5 +150,5 @@ class ApplicationSpec extends Specification with After with Before with Populate
 //      count.as[Int] must beEqualTo(testId.length)
 //      resultIds.foldLeft(true)((prev, next) => prev && testId.contains(next)) must beTrue
 //    }
-  }
+//  }
 }

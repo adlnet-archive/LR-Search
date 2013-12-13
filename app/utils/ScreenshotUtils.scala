@@ -8,9 +8,11 @@ import play.api.Logger
 import scala.sys.process._
 import scala.concurrent.Await
 import scala.concurrent.duration._
+import traits._
 
-object ScreenshotUtils {
-  def getScreenshot(dbUrl: String, client: ElasticClient)(docId: String): Future[Option[InputStream]] = {
+class ScreenshotUtils {
+  this: SearchClientContainer with UrlContainer =>
+  def getScreenshot(docId: String): Future[Option[InputStream]] = {
     if (docId == "{{result._id}}") {
       Future(None)
     } else {

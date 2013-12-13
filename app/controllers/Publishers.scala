@@ -5,9 +5,10 @@ import utils._
 import traits._
 import play.api.libs.concurrent.Execution.Implicits._
 import play.api.Logger
-object Publishers extends Controller with ESClient {
+object Publishers extends Controller {
+  val searchUtil = new SearchUtils with RemoteClientFromConfig with ResultToJson with UrlFromConfig with BoosFromConfigFile
 	def getResourcesByPublisher(publisher: String, page: Option[Int]) = Action.async {
-	  SearchUtils.searchByPublisher(client)(publisher, page.getOrElse(0)).map{
+	  searchUtil.searchByPublisher(publisher, page.getOrElse(0)).map{
 	    case Some(js) => Ok(js)
 	    case None => NotFound
 	  }
