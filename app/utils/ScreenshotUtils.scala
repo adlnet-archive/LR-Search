@@ -21,16 +21,20 @@ class ScreenshotUtils {
       val result = exec.!!
     }
   }
-  private def getScreenShotWithFailover(docId: String): Future[Option[InputStream]] = {
+  
+  private def getScreenShotWithFailover(docId: String, retries: Int = 0): Future[Option[InputStream]] = {
     async {
-      val std = url(dbUrl) / docId / "screenshot.jpeg"
-      val resp = await { Http(std) }
-      resp.getStatusCode() match {
-        case 200 => Some(resp.getResponseBodyAsStream())
-        case 404 =>
-          await { takeScreenShot(docId) }
-          await { getScreenShotWithFailover(docId) }
-        case _ => None
+      if (retries >= 3) None
+      else {
+        val std = url(dbUrl) / docId / "screenshot.jpeg"
+        val resp = await { Http(std) }
+        resp.getStatusCode() match {
+          case 200 => Some(resp.getResponseBodyAsStream())
+          case 404 =>
+            await { takeScreenShot(docId) }
+            await { getScreenShotWithFailover(docId, retries+1) }
+          case _ => None
+        }
       }
     }
   }
@@ -38,4 +42,4 @@ class ScreenshotUtils {
     if (docId == "{{result._id}}") Future(None)
     else getScreenShotWithFailover(docId)
   }
-}
+}	
