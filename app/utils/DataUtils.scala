@@ -19,7 +19,7 @@ import traits.ResultToJson
 import traits._
 
 class DataUtils {
-  this: SearchClientContainer with ResultFormatter[JsValue] with UrlContainer=>  
+  this: SearchClientContainer with ResultFormatter[JsValue] with UrlContainer =>
   def data(): Future[CountResponse] = {
     client.execute(count from "lr")
   }

@@ -10,8 +10,7 @@ import scala.async.Async.{ async, await }
 import play.api.libs.ws.WS.WSRequestHolder
 import utils.DataUtils
 import traits._
-object Flag extends Controller {
-  
+object Flag extends Controller {  
   val url = Play.application.configuration.getString("couchdb.db.flagged.url").getOrElse("http://localhost:5984/flagged")
   def acceptFlag = Action.async { request =>
     request.body.asJson match {
