@@ -12,6 +12,7 @@ import traits._
 import scala.async.Async.{ async, await }
 class ScreenshotUtils {
   this: SearchClientContainer with UrlContainer =>
+  val maxRetries = 5
   private def takeScreenShot(docId: String) = {
     async {
       val doc = await { client.get(get id docId from "lr/lr_doc") }
@@ -21,10 +22,9 @@ class ScreenshotUtils {
       val result = exec.!!
     }
   }
-  
   private def getScreenShotWithFailover(docId: String, retries: Int = 0): Future[Option[InputStream]] = {
     async {
-      if (retries >= 3) None
+      if (retries >= maxRetries) None
       else {
         val std = url(dbUrl) / docId / "screenshot.jpeg"
         val resp = await { Http(std) }
@@ -32,7 +32,7 @@ class ScreenshotUtils {
           case 200 => Some(resp.getResponseBodyAsStream())
           case 404 =>
             await { takeScreenShot(docId) }
-            await { getScreenShotWithFailover(docId, retries+1) }
+            await { getScreenShotWithFailover(docId, retries + 1) }
           case _ => None
         }
       }

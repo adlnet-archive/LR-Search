@@ -17,21 +17,20 @@ import scala.concurrent.duration._
 import java.io.InputStream
 import traits.ResultToJson
 import traits._
-
+import scala.async.Async.{ async, await }
 class DataUtils {
   this: SearchClientContainer with ResultFormatter[JsValue] with UrlContainer =>
   def data(): Future[CountResponse] = {
     client.execute(count from "lr")
   }
   def doc(docId: String): Future[Option[JsValue]] = {
-    client.get(get id docId from "lr/lr_doc").map(x => format(docId)(Right(x)))
+    async { format(docId, await { client.get(get id docId from "lr/lr_doc") }) }
   }
   def docFromCouchdb(docId: String): Future[InputStream] = {
     val std = url(dbUrl) / docId
-    val resp = Http(std)
-    resp.map(d => d.getResponseBodyAsStream())
+    async { (await { Http(std) }).getResponseBodyAsStream() }
   }
   def docs(docIds: Seq[String]): Future[Option[JsValue]] = {
-    client.search(search in "lr" filter { idsFilter(docIds: _*) }).map(format)
+    async { format(await { client.search(search in "lr" filter { idsFilter(docIds: _*) }) }) }
   }
 }

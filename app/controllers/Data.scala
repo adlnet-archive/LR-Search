@@ -23,38 +23,35 @@ object Data extends Controller {
     "data" -> Json.toJson(Seq[String]()))))
   def data(keys: Option[String]) =
     Action.async { request =>
-      keys match {
-        case Some(docIds) =>
-          val firstParse = java.net.URLDecoder.decode(docIds, "utf-8").replace("\\\"", "\"")
-          val docs = Json.parse(firstParse).as[Seq[String]]
-          async {
+      async {
+        keys match {
+          case Some(docIds) =>
+            val firstParse = java.net.URLDecoder.decode(docIds, "utf-8").replace("\\\"", "\"")
+            val docs = Json.parse(firstParse).as[Seq[String]]
             val result = await { dataUtil.docs(docs) }
             result match {
               case Some(js) => Ok(js)
               case None => emptyResult
+
             }
-          }
-        case None =>
-          async {
+          case None =>
+
             val result = await { dataUtil.data }
             Ok(Json.toJson(Map("doc_count" -> Json.toJson(result.getCount()))))
-          }
+        }
       }
     }
 
   def doc(docId: String) =
     Action.async { request =>
-      docId.toLowerCase() match {
-        case "sitemap" => {
-          async {
+      async {
+        docId.toLowerCase() match {
+          case "sitemap" => {
             val r = await { dataUtil.docFromCouchdb(docId) }
             SimpleResult(header = ResponseHeader(200, Map("Content-Type" -> "application/json")),
               body = Enumerator.fromStream(r, 256))
-
           }
-        }
-        case _ => {
-          async {
+          case _ => {
             await { dataUtil.doc(docId) } match {
               case Some(js) => Ok(js)
               case None => NotFound

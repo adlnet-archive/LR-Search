@@ -22,7 +22,7 @@ class SearchUtils {
   import play.api.Play.current
   def createQuery(termQuery: Seq[String], filters: Option[Seq[String]]): QueryDefinition = {
     def processedFilters(filters: Seq[String]) = {
-      val filterQueries = filters.map(f => matches("accessMode", f)).toList 
+      val filterQueries = filters.map(f => matches("accessMode", f)).toList
       val accessFilters = queryFilter(must(filterQueries: _*))
       val generalFilters = filters.flatMap(f => List(
         queryFilter(matches("keys", f)),
@@ -63,21 +63,22 @@ class SearchUtils {
       result match {
         case Left(t) => Future(None)
         case Right(result) =>
-          val rawBody = result.getResponseBody()          
-          val rawStandards = JSON.parseRaw(rawBody)          
+          val rawBody = result.getResponseBody()
+          val rawStandards = JSON.parseRaw(rawBody)
           val parsedStandards = rawStandards.map { x =>
             x match {
               case js: JSONObject => List(standard)
-              case js: JSONArray => js.asInstanceOf[JSONArray].list.map(_.toString)            
-            }            
+              case js: JSONArray => js.asInstanceOf[JSONArray].list.map(_.toString)
+            }
+          }
+          def runQuery(s: List[String]): Future[Option[JsValue]] = {
+            client.search(search in "lr" start (page * pageSize) limit pageSize query {
+              customScore script "_score + (doc.containsKey('paraScore') ? doc['paraScore'] : 0)" lang "mvel" query createQuery(s, filter) boost 1
+            }).map(format)
           }
           parsedStandards match {
-            case Some(Nil) => client.search(search in "lr" start (page * pageSize) limit pageSize query {
-              createQuery(List(standard), filter)
-            }).map(format)
-            case Some(s) => client.search(search in "lr" start (page * pageSize) limit pageSize query {
-              createQuery(s, filter)
-            }).map(format)
+            case Some(Nil) => runQuery(List(standard))
+            case Some(s) => runQuery(s)
             case None => Future(None)
           }
       }
