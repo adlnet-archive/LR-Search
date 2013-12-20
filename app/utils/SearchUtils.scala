@@ -53,7 +53,7 @@ class SearchUtils {
   }
   def similiar(docId: String): Future[Option[JsValue]] = {
     client.execute {
-      morelike id docId in "lr/lr_doc" minTermFreq 1 percentTermsToMatch 0.2 minDocFreq 1
+      morelike id docId in s"$indexName/$documentType" minTermFreq 1 percentTermsToMatch 0.2 minDocFreq 1
     }.map(format)
   }
   def searchLR(standard: String, page: Int, filter: Option[Seq[String]]): Future[Option[JsValue]] = {

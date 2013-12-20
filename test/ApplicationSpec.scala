@@ -27,6 +27,8 @@ class ApplicationSpec extends Specification with After with Before with Populate
       def boost = SearchBoosts(5, 4, 3, 2)
       def dbUrl = _dbUrl
       def client = _client
+      val indexName = "test"
+      val documentType = "test_doc"
     }
     "Search for term" in {
       val result = searchUtils.searchLR("title1", 0, None)
@@ -116,6 +118,8 @@ class ApplicationSpec extends Specification with After with Before with Populate
       def boost = SearchBoosts(5, 4, 3, 2)
       def dbUrl = _dbUrl
       def client = _client
+      val indexName = "test"
+      val documentType = "test_doc"
     }
     "Get Data for ID" in {
       val testId = "8851143037d629a57579139adcf76001"
