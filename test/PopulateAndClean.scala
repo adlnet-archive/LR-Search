@@ -5,7 +5,8 @@ import com.sksamuel.elastic4s._
 import scala.concurrent.Await
 import scala.concurrent.duration._
 trait PopulateAndClean {
-  val indexName = "lr/lr_doc"
+  val indexName = "lr"
+  val documentType = "lr_doc"
   val _client = ElasticClient.remote("localhost", 9300)
   val accessMode = "visual"
   val mediaFeature = "longDescription"
@@ -37,12 +38,12 @@ trait PopulateAndClean {
       "standards" -> generateStandards(i).toArray)
   }
   def before = {
-    val items = for { i <- 1 until 200 } yield index into indexName id ("8851143037d629a57579139adcf7600" + i) fields (createDocument(i))
+    val items = for { i <- 1 until 200 } yield index into s"$indexName/$documentType" id ("8851143037d629a57579139adcf7600" + i) fields (createDocument(i))
     val finalResult = Await result (_client.bulk(items: _*), Duration(2, SECONDS))
   }
   def after = {
     println("after")
-    val r = Await result (_client deleteIndex indexName, Duration(2, SECONDS))
+    val r = Await result (_client deleteIndex s"$indexName/$documentType", Duration(2, SECONDS))
     println(r.isAcknowledged())
     println(r.toString())
   }

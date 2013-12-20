@@ -1,5 +1,5 @@
 package utils
-
+import scala.async.Async._
 import scala.concurrent.Future
 import scala.util.parsing.json._
 import org.elasticsearch.action.search.SearchResponse
@@ -57,33 +57,26 @@ class SearchUtils {
     }.map(format)
   }
   def searchLR(standard: String, page: Int, filter: Option[Seq[String]]): Future[Option[JsValue]] = {
-    val svc = url(dbUrl) / "_design" / "standards" / "_list" / "just-values" / "children" <<? Map("key" -> ("\"" + standard + "\""), "stale" -> "update_after")
-    val resp: Future[Either[Throwable, Response]] = Http(svc).either
-    resp.flatMap { result =>
+    def runQuery(s: List[String]): Future[Option[JsValue]] = {
+      client.search(search in "lr" start (page * pageSize) limit pageSize query {
+        customScore script "_score + (doc.containsKey('paraScore') ? doc['paraScore'] : 0)" lang "mvel" query createQuery(s, filter) boost 1
+      }).map(format)
+    }
+    async {
+      val svc = url(dbUrl) / "_design" / "standards" / "_list" / "just-values" / "children" <<? Map("key" -> ("\"" + standard + "\""), "stale" -> "update_after")
+      val result: Either[Throwable, Response] = await { Http(svc).either }
       result match {
-        case Left(t) => Future(None)
+        case Left(t) => None
         case Right(result) =>
           val rawBody = result.getResponseBody()
           val rawStandards = JSON.parseRaw(rawBody)
-          val parsedStandards = rawStandards.map { x =>
-            x match {
-              case js: JSONObject => List(standard)
-              case js: JSONArray => js.asInstanceOf[JSONArray].list.map(_.toString)
-            }
-          }
-          def runQuery(s: List[String]): Future[Option[JsValue]] = {
-            client.search(search in "lr" start (page * pageSize) limit pageSize query {
-              customScore script "_score + (doc.containsKey('paraScore') ? doc['paraScore'] : 0)" lang "mvel" query createQuery(s, filter) boost 1
-            }).map(format)
-          }
-          parsedStandards match {
-            case Some(Nil) => runQuery(List(standard))
-            case Some(s) => runQuery(s)
-            case None => Future(None)
+          rawStandards match {
+            case Some(js: JSONObject) => await { runQuery(List(standard)) }
+            case Some(js: JSONArray) => await { runQuery(js.asInstanceOf[JSONArray].list.map(_.toString)) }
+            case None => None
           }
       }
     }
-
   }
   def searchByPublisher(publisher: String, page: Int): Future[Option[JsValue]] = {
     client.search(search in "lr" start (page * pageSize) limit pageSize query {
