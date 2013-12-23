@@ -77,7 +77,7 @@ class SearchUtils {
     }
   }
   def searchByPublisher(publisher: String, page: Int): Future[Option[JsValue]] = {
-    client.search(search in "lr" start (page * pageSize) limit pageSize query {
+    client.search(search in indexName start (page * pageSize) limit pageSize query {
       matchPhrase("publisher", publisher)
     }).map(format)
   }
