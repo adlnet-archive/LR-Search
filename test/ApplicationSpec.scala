@@ -27,8 +27,8 @@ class ApplicationSpec extends Specification with After with Before with Populate
       def boost = SearchBoosts(5, 4, 3, 2)
       def dbUrl = _dbUrl
       def client = _client
-      val indexName = "lr"
-      val documentType = "lr_doc"
+      val indexName = currentIndexName
+      val documentType = currentDocumentType
     }
     "Search for term" in {
       val result = searchUtils.searchLR("title1", 0, None)
@@ -37,12 +37,12 @@ class ApplicationSpec extends Specification with After with Before with Populate
     }
     "Search for bad term" in {
       val result = searchUtils.searchLR("aaaabbbbccaeged", 0, None)
-      val finalResult = Await result (result, Duration(2, SECONDS))
+      val finalResult = Await result (result, duration)
       finalResult must beNone
     }
     "Search for term with accessMode filter" in {
       val result = searchUtils.searchLR("title3", 0, Some(List(accessMode)))
-      val finalResult = Await result (result, Duration(2, SECONDS))
+      val finalResult = Await result (result, duration)
       finalResult must beSome[JsValue]
       val content = finalResult.get
       val accessModes = content \\ "accessMode"
@@ -53,7 +53,7 @@ class ApplicationSpec extends Specification with After with Before with Populate
     }
     "Search for term with key filter" in {
       val result = searchUtils.searchLR("title4", 0, Some(List(key)))
-      val finalResult = Await result (result, Duration(2, SECONDS))
+      val finalResult = Await result (result, duration)
       finalResult must beSome[JsValue]
       val content = finalResult.get
       val keys = content \\ "keys"
@@ -65,13 +65,13 @@ class ApplicationSpec extends Specification with After with Before with Populate
     "Search for term with multiple filter" in {
       val terms = List("visual", "DAISY3")
       val result = searchUtils.searchLR("title12", 0, Some(terms))
-      val finalResult = Await result (result, Duration(2, SECONDS))
+      val finalResult = Await result (result, duration)
       finalResult must beSome[JsValue]
     }
     "Search for term with publisher filter" in {
       val term = "test publisher"
       val result = searchUtils.searchLR("title10", 0, Some(List(term)))
-      val finalResult = Await result (result, Duration(2, SECONDS))
+      val finalResult = Await result (result, duration)
       finalResult must beSome[JsValue]
       val content = finalResult.get
       val publisher = content \\ "publisher"
@@ -83,13 +83,13 @@ class ApplicationSpec extends Specification with After with Before with Populate
     "Search for Standards" in {
       val standard = "s114360a"
       val result = searchUtils.searchLR(standard, 0, None)
-      val finalResult = Await result (result, Duration(2, SECONDS))
+      val finalResult = Await result (result, duration)
       finalResult must beSome[JsValue]
     }
     "Search for Standards Regular Term" in {
       val standard = "title1"
       val result = searchUtils.searchLR(standard, 0, None)
-      val finalResult = Await result (result, Duration(2, SECONDS))
+      val finalResult = Await result (result, duration)
       finalResult must beSome[JsValue]
     }
     "Search by publisher" in {
@@ -102,7 +102,7 @@ class ApplicationSpec extends Specification with After with Before with Populate
         dist(s2.length)(s1.length)
       }
       val result = searchUtils.searchByPublisher(publisher, 0)
-      val finalResult = Await result (result, Duration(2, SECONDS))
+      val finalResult = Await result (result, duration)
       finalResult must beSome[JsValue]
       val content = finalResult.get
       val publishers = content \\ "publisher"
@@ -118,13 +118,13 @@ class ApplicationSpec extends Specification with After with Before with Populate
       def boost = SearchBoosts(5, 4, 3, 2)
       def dbUrl = _dbUrl
       def client = _client
-      val indexName = "lr"
-      val documentType = "lr_doc"
+      val indexName = currentIndexName
+      val documentType = currentDocumentType
     }
     "Get Data for ID" in {
       val testId = "8851143037d629a57579139adcf76001"
       val item = dataUtils.doc(testId)
-      val doc = Await.result(item, Duration(2, SECONDS))
+      val doc = Await.result(item, duration)
       doc must beSome[JsValue]
       val id = doc.map(x => x \ "_id").map(x => x.as[String])
       id must beSome[String]
@@ -133,19 +133,19 @@ class ApplicationSpec extends Specification with After with Before with Populate
     "Get Data For Invalid Id" in {
       val testId = "Nothing Has This ID"
       val item = dataUtils.doc(testId)
-      val doc = Await.result(item, Duration(2, SECONDS))
+      val doc = Await.result(item, duration)
       doc must beNone
     }
     "Get Data" in {
       val item = dataUtils.data()
       val targetCount: Long = 0
-      val data: CountResponse = Await.result(item, Duration(2, SECONDS))
+      val data: CountResponse = Await.result(item, duration)
       data.getCount() must beGreaterThan(targetCount)
     }
     "Get multiple Docs" in {
       val testId = for (i <- 1 until 3) yield "8851143037d629a57579139adcf7600" + i
       val item = dataUtils.docs(testId)
-      val rawDocs = Await.result(item, Duration(2, SECONDS))
+      val rawDocs = Await.result(item, duration)
       rawDocs must beSome[JsValue]
       val docs = rawDocs.get
       val count = docs \ "count"

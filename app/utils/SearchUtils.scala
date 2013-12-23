@@ -22,15 +22,13 @@ class SearchUtils {
   import play.api.Play.current
   def createQuery(termQuery: Seq[String], filters: Option[Seq[String]]): QueryDefinition = {
     def processedFilters(filters: Seq[String]) = {
-      val filterQueries = filters.map(f => matches("accessMode", f)).toList
-      val accessFilters = queryFilter(must(filterQueries: _*))
-      val generalFilters = filters.flatMap(f => List(
+      filters.flatMap(f => List(
+        queryFilter(matches("accessMode", f)),
         queryFilter(matches("keys", f)),
-        queryFilter(matchPhrase("publisher", f)))).toList
-      accessFilters :: generalFilters
+        queryFilter(matchPhrase("publisher", f)))).toSeq
     }
-    def baseQuery(termQuerys: Seq[String]) = bool {
-      val queries = termQuerys.flatMap { t =>
+    def baseQuery(termQueries: Seq[String]) = bool {
+      val queries = termQueries.flatMap { t =>
         List(
           matchPhrase("title", t) boost boost.titlePhraseBoost setLenient true,
           matches("title", t) boost boost.titleBoost,
@@ -58,7 +56,7 @@ class SearchUtils {
   }
   def searchLR(standard: String, page: Int, filter: Option[Seq[String]]): Future[Option[JsValue]] = {
     def runQuery(s: List[String]): Future[Option[JsValue]] = {
-      client.search(search in "lr" start (page * pageSize) limit pageSize query {
+      client.search(search in indexName start (page * pageSize) limit pageSize query {
         customScore script "_score + (doc.containsKey('paraScore') ? doc['paraScore'] : 0)" lang "mvel" query createQuery(s, filter) boost 1
       }).map(format)
     }
@@ -72,7 +70,7 @@ class SearchUtils {
           val rawStandards = JSON.parseRaw(rawBody)
           rawStandards match {
             case Some(js: JSONObject) => await { runQuery(List(standard)) }
-            case Some(js: JSONArray) => await { runQuery(js.asInstanceOf[JSONArray].list.map(_.toString)) }
+            case Some(js: JSONArray) => await { runQuery(standard :: js.asInstanceOf[JSONArray].list.map(_.toString)) }
             case None => None
           }
       }

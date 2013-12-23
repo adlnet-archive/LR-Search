@@ -20,15 +20,12 @@ import traits._
 import scala.async.Async.{ async, await }
 class DataUtils {
   this: SearchClientContainer with ResultFormatter[JsValue] with UrlContainer =>
-  def data(): Future[CountResponse] = {
-    client.execute(count from indexName)
-  }
+  def data(): Future[CountResponse] = { client.execute(count from indexName) }
   def doc(docId: String): Future[Option[JsValue]] = {
     async { format(docId, await { client.get(get id docId from s"$indexName/$documentType") }) }
   }
   def docFromCouchdb(docId: String): Future[InputStream] = {
-    val std = url(dbUrl) / docId
-    async { (await { Http(std) }).getResponseBodyAsStream() }
+    async { (await { Http(url(dbUrl) / docId) }).getResponseBodyAsStream() }
   }
   def docs(docIds: Seq[String]): Future[Option[JsValue]] = {
     async { format(await { client.search(search in indexName filter { idsFilter(docIds: _*) }) }) }
