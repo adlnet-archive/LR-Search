@@ -57,10 +57,10 @@ class SearchUtils {
   def searchLR(standard: String, page: Int, filter: Option[Seq[String]]): Future[Option[JsValue]] = {
     def runQuery(s: List[String]): Future[Option[JsValue]] = {
       client.search(search in indexName start (page * pageSize) limit pageSize query {
-        customScore script "_score + (doc.containsKey('paraScore') ? doc['paraScore'] : 0)" lang "mvel" query createQuery(s, filter) boost 1
+        customScore script "_score + (doc.containsKey('paraScore') ? doc['paraScore'].value : 0)" lang "mvel" query createQuery(s, filter) boost 1
       }).map(format)
     }
-    async {
+    async {      
       val svc = url(dbUrl) / "_design" / "standards" / "_list" / "just-values" / "children" <<? Map("key" -> ("\"" + standard + "\""), "stale" -> "update_after")
       val result: Either[Throwable, Response] = await { Http(svc).either }
       result match {

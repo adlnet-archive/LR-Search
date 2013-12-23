@@ -4,6 +4,7 @@ import com.sksamuel.elastic4s.ElasticDsl._
 import com.sksamuel.elastic4s._
 import scala.concurrent.Await
 import scala.concurrent.duration._
+import scala.util._
 trait PopulateAndClean {
   val currentIndexName = "test"
   val currentDocumentType = "test_doc"
@@ -28,24 +29,25 @@ trait PopulateAndClean {
   def generatePublisher(i: Int) = {
     if (i % 10 == 0) publisher else ""
   }
+  def generateParaScore(i: Int) = {
+    if(i % 9 == 0) Float.MaxValue else 0.0
+  }
   def createDocument(i: Int) = {
     Map(
       "title" -> ("title" + i),
-      "description" -> ("desc" + i),
+      "description" -> ("desc " + i),
       "publisher" -> generatePublisher(i),
       "keys" -> generateKeys(i).toArray,
       "mediaFeatures" -> generateMediaFeatures(i).toArray,
       "accessMode" -> generateAccessMode(i).toArray,
-      "standards" -> generateStandards(i).toArray)
+      "standards" -> generateStandards(i).toArray,
+      "paraScore" -> generateParaScore(i))
   }
   def before = {
     val items = for { i <- 1 until 200 } yield index into s"$currentIndexName/$currentDocumentType" id ("8851143037d629a57579139adcf7600" + i) fields (createDocument(i))
     val finalResult = Await result (_client.bulk(items: _*), duration)
   }
   def after = {
-    println("after")
     val r = Await result (_client deleteIndex s"$currentIndexName/$currentDocumentType", duration)
-    println(r.isAcknowledged())
-    println(r.toString())
   }
 }

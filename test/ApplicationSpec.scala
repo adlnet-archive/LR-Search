@@ -92,6 +92,17 @@ class ApplicationSpec extends Specification with After with Before with Populate
       val finalResult = Await result (result, duration)
       finalResult must beSome[JsValue]
     }
+    "Verify paraScore custom ranking" in {
+      val standard = "desc"
+      val result = searchUtils.searchLR(standard, 0, None)
+      val finalResult = Await result (result, duration)
+      finalResult must beSome[JsValue]
+      //if the number in the title is divisible to 9 we set the paraScore to Float.MaxVaue so it should rank first
+      //then test to see if the first result has the correct number
+      val testTitle = (finalResult.get \\ "title").toList.map(x => x.as[String]).head.substring(5).toInt
+      (testTitle % 9 == 0) must beTrue
+
+    }
     "Search by publisher" in {
       def minimum(i1: Int, i2: Int, i3: Int) = min(min(i1, i2), i3)
       def distance(s1: String, s2: String) = {
