@@ -31,17 +31,17 @@ class ApplicationSpec extends Specification with After with Before with Populate
       val documentType = currentDocumentType
     }
     "Search for term" in {
-      val result = searchUtils.searchLR("title1", 0, None)
+      val result = searchUtils.searchLR("title1", 0, None, None, None)
       val finalResult = Await result (result, Duration(2, SECONDS))
       finalResult must beSome[JsValue]
     }
     "Search for bad term" in {
-      val result = searchUtils.searchLR("aaaabbbbccaeged", 0, None)
+      val result = searchUtils.searchLR("aaaabbbbccaeged", 0, None, None, None)
       val finalResult = Await result (result, duration)
       finalResult must beNone
     }
     "Search for term with accessMode filter" in {
-      val result = searchUtils.searchLR("title3", 0, Some(List(accessMode)))
+      val result = searchUtils.searchLR("title3", 0, None, None, Some(List(accessMode)))
       val finalResult = Await result (result, duration)
       finalResult must beSome[JsValue]
       val content = finalResult.get
@@ -52,7 +52,7 @@ class ApplicationSpec extends Specification with After with Before with Populate
       items.foldLeft(true)((prev, next) => prev && next.contains(accessMode)) must beTrue
     }
     "Search for term with key filter" in {
-      val result = searchUtils.searchLR("title4", 0, Some(List(key)))
+      val result = searchUtils.searchLR("title4", 0, Some(List(key)), None, None)
       val finalResult = Await result (result, duration)
       finalResult must beSome[JsValue]
       val content = finalResult.get
@@ -64,13 +64,13 @@ class ApplicationSpec extends Specification with After with Before with Populate
     }
     "Search for term with multiple filter" in {
       val terms = List("visual", "DAISY3")
-      val result = searchUtils.searchLR("title12", 0, Some(terms))
+      val result = searchUtils.searchLR("title12", 0, Some(List("DAISY3")), None, Some(List("visual")))
       val finalResult = Await result (result, duration)
       finalResult must beSome[JsValue]
     }
     "Search for term with publisher filter" in {
       val term = "test publisher"
-      val result = searchUtils.searchLR("title10", 0, Some(List(term)))
+      val result = searchUtils.searchLR("title10", 0, Some(List(term)), None, None)
       val finalResult = Await result (result, duration)
       finalResult must beSome[JsValue]
       val content = finalResult.get
@@ -82,19 +82,19 @@ class ApplicationSpec extends Specification with After with Before with Populate
     }
     "Search for Standards" in {
       val standard = "s114360a"
-      val result = searchUtils.searchLR(standard, 0, None)
+      val result = searchUtils.searchLR(standard, 0, None, None, None)
       val finalResult = Await result (result, duration)
       finalResult must beSome[JsValue]
     }
     "Search for Standards Regular Term" in {
       val standard = "title1"
-      val result = searchUtils.searchLR(standard, 0, None)
+      val result = searchUtils.searchLR(standard, 0, None, None, None)
       val finalResult = Await result (result, duration)
       finalResult must beSome[JsValue]
     }
     "Verify paraScore custom ranking" in {
       val standard = "desc"
-      val result = searchUtils.searchLR(standard, 0, None)
+      val result = searchUtils.searchLR(standard, 0, None, None, None)
       val finalResult = Await result (result, duration)
       finalResult must beSome[JsValue]
       //if the number in the title is divisible to 9 we set the paraScore to Float.MaxVaue so it should rank first

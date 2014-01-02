@@ -9,7 +9,7 @@ GET       /review/:docId               controllers.Application.reviewDocument(do
 GET       /publisher/:publisher        controllers.Publishers.getResourcesByPublisher(publisher, page: Option[Int])
 GET       /data                        controllers.Data.data(keys: Option[String])
 GET       /data/:docId                 controllers.Data.doc(docId:String)
-GET       /search                      controllers.Search.search(terms, page: Option[Int], filter: Option[String])
+GET       /search                      controllers.Search.search(terms: String, page: Option[Int], filter: Option[String], contentType: Option[String], accessibility: Option[String])
 GET       /similiar/:id                controllers.Search.similiar(id: String)
 GET       /new/standards/:standardId   controllers.Standards.standard(standardId: String)
 GET       /new/standards               controllers.Standards.standards

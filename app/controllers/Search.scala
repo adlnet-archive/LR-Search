@@ -19,11 +19,13 @@ object Search extends Controller {
   val emptyResult = Ok(Json.toJson(Map(
     "count" -> Json.toJson(0),
     "data" -> Json.toJson(List[String]()))))
-  def search(terms: String, page: Option[Int], filter: Option[String]) = Cached(terms + page.getOrElse(0) + filter.getOrElse("")) {
+    
+  def search(terms: String, page: Option[Int], filter: Option[String], contentType: Option[String], accessibility: Option[String]) = Cached(terms + page.getOrElse(0) + filter.getOrElse("")) {
     Action.async { request =>
       val parsedFilters: Option[Seq[String]] = filter.map(_.split(";"))
+      val parsedAccessibilityOptions: Option[Seq[String]] = accessibility.map(_.split(";"))
       async {
-        await { searchUtil.searchLR(terms, page.getOrElse(0), parsedFilters) } match {
+        await { searchUtil.searchLR(terms, page.getOrElse(0), parsedFilters, contentType, parsedAccessibilityOptions) } match {
           case Some(js) => Ok(js)
           case None => emptyResult
         }
