@@ -4,8 +4,6 @@
 
 # Home page
 GET       /                            controllers.Application.index
-GET       /review                      controllers.Application.review
-GET       /review/:docId               controllers.Application.reviewDocument(docId)
 GET       /publisher/:publisher        controllers.Publishers.getResourcesByPublisher(publisher, page: Option[Int])
 GET       /data                        controllers.Data.data(keys: Option[String])
 GET       /data/:docId                 controllers.Data.doc(docId:String)

@@ -30,7 +30,7 @@ trait ResultToJson extends ResultFormatter[JsValue] {
       "title" -> Json.toJson(convertString(tmp.getOrElse("title", ""))),
       "publisher" -> Json.toJson(convertString(tmp.getOrElse("publisher", ""))),
       "description" -> Json.toJson(convertString(tmp.getOrElse("description", ""))),
-      "mediaFeatures" -> Json.toJson(convertStringList(tmp, "mediaFeatures")),
+      "accessibilityFeature" -> Json.toJson(convertStringList(tmp, "mediaFeatures")),
       "hasScreenshot" -> Json.toJson(true),
       "url" -> Json.toJson(tmp.getOrElse("url", "").toString))))
   }

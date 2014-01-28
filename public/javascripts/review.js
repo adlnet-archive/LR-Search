@@ -1,8 +1,5 @@
-/**
- * 
- */
 angular
-		.module('search', [])
+		.module('lr.review', [])
 		.directive(
 				'review',
 				function() {
@@ -12,12 +9,12 @@ angular
 						scope : {},
 						link : function($scope, $element, $attrs) {
 						},
-						controller : function($scope, $http, $attrs) {
+						controller : function($scope, $http, $attrs, $routeParams) {
 							$scope.results = [];
-							$http.get($attrs.endpoint).then(
+							console.log($attrs.endpoint + "flagged/" + $routeParams.docId)
+							$http.get($attrs.endpoint + "flagged/" + $routeParams.docId).then(
 									function(data) {
 										if (data.data.flaggedItems) {
-											console.log(data.data.flaggedItems);
 											angular.copy(
 													data.data.flaggedItems,
 													$scope.results);
@@ -42,9 +39,9 @@ angular
 						scope : {},
 						link : function($scope, $element, $attrs) {
 						},
-						controller : function($scope, $http, $attrs) {
+						controller : function($scope, $http, $attrs, $routeParams) {
 							$scope.result = {};
-							$http.get($attrs.endpoint).then(function(data) {
+							$http.get($attrs.endpoint + "data/" + $routeParams.docId).then(function(data) {
 								$scope.result = data.data;
 							});
 
@@ -55,4 +52,4 @@ angular
 								+ '<p class="text-muted">{{result.url}}</p>'
 								+ '<p>{{result.description}}</p>' + '</div>'
 					}
-				})
+				});

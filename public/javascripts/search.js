@@ -1,70 +1,68 @@
 angular
-		.module('search', [])
-		.service("searchService", function($rootScope, $http) {
-			return {
-				self : this,
-				updating : false,
-				search : function(searchurl, query, page) {
-					if (!self.updating) {
-						self.updating = true;
-						$http.get(searchurl + '/search', {
-							params : {
-								terms : query,
-								page : page
-							}
-						}).then(function(data) {
-							$rootScope.$broadcast("searchComplete", data.data);
-							self.updating = false;
-
-						});
-					}
-				},
-				similiar : function(searchurl, docId, page) {
-					$http.get(searchurl + '/similiar/' + docId, {
-						params : {
-							page : page
+		.module('lr.search', [])
+		.service(
+				"searchService",
+				function($rootScope, $http) {
+					return {
+						query : "",
+						page : 0,
+						searchUrl : "",
+						searchResults : [],
+						broadcastResults : function(data) {
+							this.searchResults = this.searchResults.concat(data);
+							$rootScope.$broadcast("searchComplete",this.searchResults);
+						},
+						loadPage : function() {
+							var self = this;
+							$http.get(this.searchUrl + "search", {
+								params : {
+									terms : this.query,
+									page : this.page
+								}
+							}).then(function(data){
+								var data = data.data.data.map(function(item){
+									item.screenShotUrl = self.searchUrl + "screenshot/" + item._id;
+									return item;
+								});								
+								self.broadcastResults(data);
+							});
+							this.page++;
+						},
+						search : function() {
+							this.searchResults = [];
+							this.page = 0;
+							this.loadPage();
+						},
+						loadNextPage: function() {
+							this.loadPage();
+						},
+						similiar : function(docId) {
+							$http.get(this.searchUrl + 'similiar/' + docId, {
+								params : {
+									page : this.page
+								}
+							}).then(this.broadcastResults);
+							this.page++;
 						}
-					}).then(function(data) {
-						$rootScope.$broadcast("searchComplete", data.data);
-						self.updating = false;
 
-					});
-				}
-
-			}
-		})
+					}
+				})
 		.directive(
 				'lrsearch',
 				function() {
 					return {
 						restrict : "E",
 						transclude : true,
-						scope : {
-							searchUrl : "=searchUrl"
-						},
+						scope : {},
 						link : function($scope, $element, $attrs, searchService) {
-							var searchurl = $attrs.searchurl;
-							if (searchurl.charAt(searchurl.length - 1) === '/') {
-								searchurl = searchurl.slice(0,
-										searchurl.length - 1);
-							}							
-							$scope.searchurl = searchurl
-							searchService.searchUrl = searchurl
+							var searchurl = $attrs.endpoint;
+							$scope.searchUrl = searchurl;
 						},
 						controller : function($scope, searchService) {
-							searchService.searchUrl = $scope.searchurl
-							$scope.query = "";
-							$scope.page = 0;
-							var updateResults = function() {
-								searchService.search($scope.searchurl,
-										$scope.query, $scope.page);
-							}
-							$scope.$on('searchComplete', function(e, args) {
-								$scope.page++;
-							});
 							$scope.search = function() {
-								$scope.page = 0;
-								updateResults();
+								searchService.searchUrl = $scope.searchUrl;
+								searchService.query = $scope.query;
+								searchService.search();
 							}
 
 						},
@@ -82,20 +80,23 @@ angular
 						transclude : true,
 						scope : {},
 						controller : function($scope, searchService) {
-							$scope.results = [],
-							$scope.$on('searchComplete',
-											function(e, args) {
-												angular.copy(args.data,
-														$scope.results);
-											})
+							$scope.results = [];
+							$scope.$on('searchComplete', function(e, args) {
+								angular.copy(args, $scope.results);
+							});
+							$scope.next = function() {
+								searchService.loadNextPage();
+							}
 						},
 						template : '<dl ng-repeat="result in results">'
 								+ '<dt><a href="{{result.url}}">{{result.title}}</a></dt>'
 								+ '<dd>'
-								+ '<img src="/screenshot/{{result._id}}"/><br/>'
-								+ '<a href="/review/{{result._id}}" class="text-muted">Review</a>'
+								+ '<a href="{{result.url}}"><img src="{{result.screenShotUrl}}"/></a><br/>'
 								+ '<p class="text-muted">{{result.url}}</p>'
-								+ '<p>{{result.description}}</p>' + '</dd>'
+								+ '<p>{{result.description}}</p>'
+								+ '<a href="#/review/{{result._id}}" class="text-muted">Review</a>'
+								+ '</dd>'
 								+ '</dl>'
+								+ '<button ng-click="next()" class="btn">Next</button>'
 					}
 				});

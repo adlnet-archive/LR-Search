@@ -11,7 +11,7 @@ trait PopulateAndClean {
   val _client = ElasticClient.remote("localhost", 9300)
   val accessMode = "visual"
   val mediaFeature = "longDescription"
-  val key = "DAISY3"
+  val key = "video"
   val publisher = "test publisher"
   val duration = Duration(60, SECONDS)
   def generateMediaFeatures(i: Int): Seq[String] = {

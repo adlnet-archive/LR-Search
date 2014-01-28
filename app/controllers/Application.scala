@@ -15,16 +15,6 @@ object Application extends Controller {
       Ok(views.html.index())
     }
   }
-  def review = Cached("review") {
-    Action {
-      Ok(views.html.review())
-    }
-  }
-  def reviewDocument(docId: String) = Cached("reviewDoc") {
-    Action {
-      Ok(views.html.view(docId))
-    }
-  }
   def cors(junk: String) = Action {
     Ok("")
   }

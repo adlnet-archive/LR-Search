@@ -21,7 +21,16 @@ class SearchUtils {
   import play.api.Play.current
   val pageSize = 25
   def processAccessibilityMetadata(accessibiltiyOptions: Seq[String]) = {
-    must(accessibiltiyOptions.map(f => queryFilter(matches("accessMode", f))): _*)
+    def mapFunc(f: String) = {
+      val accessModeFilter =queryFilter(matches("accessMode", f))
+      val mediaFeaturesFilter = queryFilter(matches("mediaFeatures", f))
+      should(accessModeFilter, mediaFeaturesFilter)
+    }
+    val queries = accessibiltiyOptions.map(mapFunc)
+    must(queries: _*)
+  }
+  def processAccessibilityAndContentType(accessibility: Seq[String], contentType: String) = {
+    must(queryFilter(matches("keys", contentType)), processAccessibilityMetadata(accessibility))
   }
   def processedFilters(filters: Seq[String]) = {
     filters.flatMap(f => List(
@@ -40,6 +49,7 @@ class SearchUtils {
     }
     should(queries: _*)
   }
+
   def createFilteredQuery(termQuery: Seq[String], filters: FilterDefinition) = {
     filteredQuery query {
       baseQuery(termQuery)
@@ -47,39 +57,52 @@ class SearchUtils {
       filters
     }
   }
-  def createQuery(termQuery: Seq[String], filters: Option[Seq[String]], accessibilityOptions: Option[Seq[String]]): QueryDefinition = {
-    val filterCombinations = (filters, accessibilityOptions)
+
+  def createQuery(termQuery: Seq[String], filters: Option[Seq[String]], accessibilityOptions: Option[Seq[String]], contentType: Option[String]): QueryDefinition = {
+    val filterCombinations = (filters, accessibilityOptions, contentType)
+    println(filterCombinations)
     filterCombinations match {
-      case (Some(filters), Some(accessibilityOptions)) =>
-        val totalFilters = processAccessibilityMetadata(accessibilityOptions) :: processedFilters(filters)
-        createFilteredQuery(termQuery, should(totalFilters: _*))
-      case (Some(filters), None) => createFilteredQuery(termQuery, should(processedFilters(filters): _*))
-      case (None, Some(accessibilityOptions)) => createFilteredQuery(termQuery, processAccessibilityMetadata(accessibilityOptions))
-      case (None, None) => baseQuery(termQuery)
+      case (Some(filters), Some(accessibilityOptions), Some(contentType)) =>
+        createFilteredQuery(termQuery, should((processAccessibilityAndContentType(accessibilityOptions, contentType) :: processedFilters(filters)): _*))
+      case (Some(filters), Some(accessibilityOptions), None) =>
+        createFilteredQuery(termQuery, should((processAccessibilityMetadata(accessibilityOptions) :: processedFilters(filters)): _*))
+      case (Some(filters), None, Some(contentType)) =>
+        createFilteredQuery(termQuery, must(queryFilter(matches("keys", contentType)), should(processedFilters(filters): _*)))
+      case (Some(filters), None, None) =>
+        createFilteredQuery(termQuery, should(processedFilters(filters): _*))
+      case (None, Some(accessibilityOptions), Some(contentType)) =>
+        createFilteredQuery(termQuery, processAccessibilityAndContentType(accessibilityOptions, contentType))
+      case (None, Some(accessibilityOptions), None) =>
+        createFilteredQuery(termQuery, processAccessibilityMetadata(accessibilityOptions))
+      case (None, None, Some(contentType)) =>
+        createFilteredQuery(termQuery, must(queryFilter(matches("keys", contentType))))
+      case (None, None, None) =>
+        baseQuery(termQuery)
     }
   }
+
   def similiar(docId: String): Future[Option[JsValue]] = {
     client.execute {
       morelike id docId in s"$indexName/$documentType" minTermFreq 1 percentTermsToMatch 0.2 minDocFreq 1
     }.map(format)
   }
   def searchLR(standard: String, page: Int, filter: Option[Seq[String]], contentType: Option[String], accessibilityOptions: Option[Seq[String]]): Future[Option[JsValue]] = {
-    def runQuery(s: List[String]): Future[Option[JsValue]] = {
-      client.search(search in indexName start (page * pageSize) limit pageSize query {
-        customScore script "_score + (doc.containsKey('paraScore') ? doc['paraScore'].value : 0)" lang "mvel" query createQuery(s, filter, accessibilityOptions) boost 1
-      }).map(format)
-    }
-    def processExpandedQuery(result: Response) = {
-      async {
-        val rawBody = result.getResponseBody()
-        val rawStandards = JSON.parseRaw(rawBody)
-        rawStandards match {
-          case Some(js: JSONObject) => await { runQuery(List(standard)) }
-          case Some(js: JSONArray) => await { runQuery(standard :: js.asInstanceOf[JSONArray].list.map(_.toString)) }
-          case None => None
+      def runQuery(s: List[String]): Future[Option[JsValue]] = {
+        client.search(search in indexName start (page * pageSize) limit pageSize query {
+          customScore script "_score + (doc.containsKey('paraScore') ? doc['paraScore'].value : 0)" lang "mvel" query createQuery(s, filter, accessibilityOptions, contentType) boost 1
+        }).map(format)
+      }
+      def processExpandedQuery(result: Response) = {
+        async {
+          val rawBody = result.getResponseBody()
+          val rawStandards = JSON.parseRaw(rawBody)
+          rawStandards match {
+            case Some(js: JSONObject) => await { runQuery(List(standard)) }
+            case Some(js: JSONArray)  => await { runQuery(standard :: js.asInstanceOf[JSONArray].list.map(_.toString)) }
+            case None                 => None
+          }
         }
       }
-    }
     async {
       val svc = url(dbUrl) / "_design" / "standards" / "_list" / "just-values" / "children" <<? Map("key" -> ("\"" + standard + "\""), "stale" -> "update_after")
       val result: Either[Throwable, Response] = await { Http(svc).either }

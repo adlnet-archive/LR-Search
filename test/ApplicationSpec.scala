@@ -68,6 +68,11 @@ class ApplicationSpec extends Specification with After with Before with Populate
       val finalResult = Await result (result, duration)
       finalResult must beSome[JsValue]
     }
+    "Search for video" in {
+      val result = searchUtils.searchLR("title12", 0, None, Some("video"), None)
+      val finalResult = Await result (result, duration)      
+      finalResult must beSome[JsValue]
+    }
     "Search for term with publisher filter" in {
       val term = "test publisher"
       val result = searchUtils.searchLR("title10", 0, Some(List(term)), None, None)
