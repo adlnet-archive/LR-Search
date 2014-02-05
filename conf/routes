@@ -11,6 +11,7 @@ GET       /search                      controllers.Search.search(terms: String, 
 GET       /similiar/:id                controllers.Search.similiar(id: String)
 GET       /new/standards/:standardId   controllers.Standards.standard(standardId: String)
 GET       /new/standards               controllers.Standards.standards
+GET       /new/standards/               controllers.Standards.standards
 GET       /screenshot/:docId           controllers.Screenshot.getScreenshot(docId: String)
 POST      /flagged                     controllers.Flag.acceptFlag
 GET       /flagged                     controllers.Flag.flaggedItems

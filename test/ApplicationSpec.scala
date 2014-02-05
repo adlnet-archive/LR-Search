@@ -26,6 +26,7 @@ class ApplicationSpec extends Specification with After with Before with Populate
     val searchUtils = new SearchUtils with SearchClientContainer with UrlContainer with BoostContainer with ResultToJson {
       def boost = SearchBoosts(5, 4, 3, 2)
       def dbUrl = _dbUrl
+      def standardsUrl = "http://localhost:5984/standards"
       def client = _client
       val indexName = currentIndexName
       val documentType = currentDocumentType
@@ -133,6 +134,7 @@ class ApplicationSpec extends Specification with After with Before with Populate
     val dataUtils = new DataUtils with SearchClientContainer with UrlContainer with BoostContainer with ResultToJson {
       def boost = SearchBoosts(5, 4, 3, 2)
       def dbUrl = _dbUrl
+      def standardsUrl = "http://localhost:5984/standards"
       def client = _client
       val indexName = currentIndexName
       val documentType = currentDocumentType

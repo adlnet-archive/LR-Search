@@ -46,8 +46,9 @@ def capture(filename, url):
     s.capture(url, filename)
 
 
-if __name__ == "__main__":
+if __name__ == "__main__":	
     args = sys.argv
+    print(args)
     filename = args[2]
     url = args[1]    
     capture(filename, url)
