@@ -9,11 +9,12 @@ import utils._
 import play.api.libs.iteratee.Enumerator
 import traits._
 
-object Screenshot extends Controller {
-  val screenShotUtil: ScreenshotUtils = new ScreenshotUtils with RemoteClientFromConfig with UrlFromConfig
+object Screenshot extends Controller {  
   def getScreenshot(docId: String) = Action.async { request =>
     async {
-      await { screenShotUtil.getScreenshot(docId) } match {
+      val screenShotUtil: ScreenshotUtils = new ScreenshotUtils with RemoteClientFromConfig with UrlFromConfig
+      val result = await { screenShotUtil.getScreenshot(docId) }
+      result match {
         case Some(d) => SimpleResult(
           header = ResponseHeader(200, Map("Content-Type" -> "image/jpeg")),
           body = Enumerator.fromStream(d, 256))

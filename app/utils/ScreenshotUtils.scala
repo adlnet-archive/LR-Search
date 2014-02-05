@@ -10,36 +10,66 @@ import scala.concurrent.Await
 import scala.concurrent.duration._
 import traits._
 import scala.async.Async.{ async, await }
+import scalax.io._
+import scala.io._
+import scala.io.Source._
+import java.io.BufferedInputStream
 class ScreenshotUtils {
   this: SearchClientContainer with UrlContainer =>
-  val maxRetries = 5
-  private def takeScreenShot(docId: String) = {
-    async {
-      val doc = await { client.get(get id docId from "lr/lr_doc") }
-      val siteUrl = doc.getSource().get("url").asInstanceOf[String]
-      val currentLocation = System.getProperty("user.dir")
-      val exec = s"xvfb-run --auto-servernum --server-num=1 python $currentLocation/screenshots.py $siteUrl $docId $dbUrl"
-      val result = exec.!!
+  private def serveFile(docId: String) = {
+    val currentLocation = System.getProperty("user.dir")
+    val destination = s"$currentLocation/screenshots/$docId.jpg"
+    try {
+      Some(new java.io.FileInputStream(destination))
+    } catch {
+      case t: Throwable => None
     }
   }
-  private def getScreenShotWithFailover(docId: String, retries: Int = 0): Future[Option[InputStream]] = {
+  private def takeScreenShot(docId: String): Future[Option[InputStream]] = {
     async {
-      if (retries >= maxRetries) None
-      else {
-        val std = url(dbUrl) / docId / "screenshot.jpeg"
-        val resp = await { Http(std) }
-        resp.getStatusCode() match {
-          case 200 => Some(resp.getResponseBodyAsStream())
-          case 404 =>
-            await { takeScreenShot(docId) }
-            await { getScreenShotWithFailover(docId, retries + 1) }
-          case _ => None
-        }
+      val doc = await { client.execute(get id docId from "lr/lr_doc") }
+      val siteUrl = doc.getSource().get("url").asInstanceOf[String]
+      val currentLocation = System.getProperty("user.dir")
+      val destination = s"$currentLocation/screenshots/$docId.jpg"
+      val exec = s"xvfb-run --auto-servernum --server-num=1 python $currentLocation/screenshots.py $siteUrl $destination"
+      val result = exec.!!
+      serveFile(docId)
+    }
+  }
+  private def getFromCouchdb(docId: String) = {
+    async {
+      val std = url(dbUrl) / docId / "screenshot.jpeg"
+      val resp = await { Http(std) }
+      resp.getStatusCode() match {
+        case 200 =>
+          val currentLocation = System.getProperty("user.dir")
+          val destination = s"$currentLocation/screenshots/$docId.jpg"
+          val outFile = new java.io.FileOutputStream(destination)
+          val remoteFile = resp.getResponseBodyAsStream()
+          try {
+            var buffer = new Array[Byte](256)
+            while(remoteFile.read(buffer) > 0){
+              outFile.write(buffer)
+            }
+          } finally {
+            outFile.close()
+          }
+          remoteFile.reset()
+          Some(remoteFile)
+        case _ => await { takeScreenShot(docId) }
+      }
+    }
+  }
+  private def getScreenShot(docId: String): Future[Option[InputStream]] = {
+    async {
+      serveFile(docId) match {
+        case Some(data) => Some(data)
+        case None       => await { getFromCouchdb(docId) }
       }
     }
   }
   def getScreenshot(docId: String): Future[Option[InputStream]] = {
     if (docId == "{{result._id}}") Future(None)
-    else getScreenShotWithFailover(docId)
+    else getScreenShot(docId)
   }
 }	

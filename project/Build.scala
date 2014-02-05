@@ -13,7 +13,7 @@ object ApplicationBuild extends Build {
     "com.typesafe.akka" %% "akka-actor" % "2.2.0",
     "org.scala-lang.modules" %% "scala-async" % "0.9.0-M2",
     "net.databinder.dispatch" %% "dispatch-core" % "0.11.0",
-    "com.sksamuel.elastic4s" % "elastic4s_2.10" % "0.90.5.2")
+    "com.sksamuel.elastic4s" % "elastic4s_2.10" % "0.90.10.0")
 
   val main = play.Project(appName, appVersion, appDependencies).settings(atmosPlaySettings: _*)
 }

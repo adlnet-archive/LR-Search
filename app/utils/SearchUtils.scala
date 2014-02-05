@@ -18,14 +18,13 @@ import com.fasterxml.jackson.annotation.JsonValue
 case class SearchBoosts(val titlePhraseBoost: Int, val titleBoost: Int, val descriptionPhraseBoost: Int, val descriptionBoost: Int)
 class SearchUtils {
   this: SearchClientContainer with ResultFormatter[JsValue] with UrlContainer with BoostContainer =>
-  import play.api.Play.current
   val pageSize = 25
   def processAccessibilityMetadata(accessibiltiyOptions: Seq[String]) = {
-    def mapFunc(f: String) = {
-      val accessModeFilter =queryFilter(matches("accessMode", f))
-      val mediaFeaturesFilter = queryFilter(matches("mediaFeatures", f))
-      should(accessModeFilter, mediaFeaturesFilter)
-    }
+      def mapFunc(f: String) = {
+        val accessModeFilter = queryFilter(matches("accessMode", f))
+        val mediaFeaturesFilter = queryFilter(matches("mediaFeatures", f))
+        should(accessModeFilter, mediaFeaturesFilter)
+      }
     val queries = accessibiltiyOptions.map(mapFunc)
     must(queries: _*)
   }
@@ -49,7 +48,6 @@ class SearchUtils {
     }
     should(queries: _*)
   }
-
   def createFilteredQuery(termQuery: Seq[String], filters: FilterDefinition) = {
     filteredQuery query {
       baseQuery(termQuery)
@@ -57,10 +55,8 @@ class SearchUtils {
       filters
     }
   }
-
   def createQuery(termQuery: Seq[String], filters: Option[Seq[String]], accessibilityOptions: Option[Seq[String]], contentType: Option[String]): QueryDefinition = {
     val filterCombinations = (filters, accessibilityOptions, contentType)
-    println(filterCombinations)
     filterCombinations match {
       case (Some(filters), Some(accessibilityOptions), Some(contentType)) =>
         createFilteredQuery(termQuery, should((processAccessibilityAndContentType(accessibilityOptions, contentType) :: processedFilters(filters)): _*))
@@ -88,7 +84,7 @@ class SearchUtils {
   }
   def searchLR(standard: String, page: Int, filter: Option[Seq[String]], contentType: Option[String], accessibilityOptions: Option[Seq[String]]): Future[Option[JsValue]] = {
       def runQuery(s: List[String]): Future[Option[JsValue]] = {
-        client.search(search in indexName start (page * pageSize) limit pageSize query {
+        client.execute(search in indexName start (page * pageSize) limit pageSize query {
           customScore script "_score + (doc.containsKey('paraScore') ? doc['paraScore'].value : 0)" lang "mvel" query createQuery(s, filter, accessibilityOptions, contentType) boost 1
         }).map(format)
       }
@@ -115,7 +111,7 @@ class SearchUtils {
     }
   }
   def searchByPublisher(publisher: String, page: Int): Future[Option[JsValue]] = {
-    client.search(search in indexName start (page * pageSize) limit pageSize query {
+    client.execute(search in indexName start (page * pageSize) limit pageSize query {
       matchPhrase("publisher", publisher)
     }).map(format)
   }

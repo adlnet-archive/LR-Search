@@ -2,6 +2,7 @@ logs
 bin
 project/project
 project/target
+screenshots/*.jpg
 target
 tmp
 .history

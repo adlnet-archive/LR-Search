@@ -22,12 +22,12 @@ class DataUtils {
   this: SearchClientContainer with ResultFormatter[JsValue] with UrlContainer =>
   def data(): Future[CountResponse] = { client.execute(count from indexName) }
   def doc(docId: String): Future[Option[JsValue]] = {
-    async { format(docId, await { client.get(get id docId from s"$indexName/$documentType") }) }
+    async { format(docId, await { client.execute(get id docId from s"$indexName/$documentType") }) }
   }
   def docFromCouchdb(docId: String): Future[InputStream] = {
     async { (await { Http(url(dbUrl) / docId) }).getResponseBodyAsStream() }
   }
   def docs(docIds: Seq[String]): Future[Option[JsValue]] = {
-    async { format(await { client.search(search in indexName filter { idsFilter(docIds: _*) }) }) }
+    async { format(await { client.execute(search in indexName filter { idsFilter(docIds: _*) }) }) }
   }
 }

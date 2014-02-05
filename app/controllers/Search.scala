@@ -15,7 +15,6 @@ import com.sksamuel.elastic4s.ElasticClient
 import play.api.cache.Cached
 object Search extends Controller {
   import play.api.Play.current
-  val searchUtil = new SearchUtils with RemoteClientFromConfig with ResultToJson with UrlFromConfig with BoosFromConfigFile
   val emptyResult = Ok(Json.toJson(Map(
     "count" -> Json.toJson(0),
     "data" -> Json.toJson(List[String]()))))
@@ -23,10 +22,13 @@ object Search extends Controller {
   def search(terms: String, page: Option[Int], filter: Option[String], contentType: Option[String], accessibility: Option[String]) =
     Cached(terms + page.getOrElse(0) + filter.getOrElse("") + contentType.getOrElse("") + accessibility.getOrElse("")) {
       Action.async { request =>
+        val searchUtil = new SearchUtils with RemoteClientFromConfig with ResultToJson with UrlFromConfig with BoosFromConfigFile
         val parsedFilters: Option[Seq[String]] = filter.map(_.split(";"))
         val parsedAccessibilityOptions: Option[Seq[String]] = accessibility.map(_.split(";"))
         async {
-          await { searchUtil.searchLR(terms, page.getOrElse(0), parsedFilters, contentType, parsedAccessibilityOptions) } match {
+          val result = await { searchUtil.searchLR(terms, page.getOrElse(0), parsedFilters, contentType, parsedAccessibilityOptions) }
+          searchUtil.client.close
+          result match {
             case Some(js) => Ok(js)
             case None     => emptyResult
           }
@@ -35,8 +37,11 @@ object Search extends Controller {
     }
   def similiar(id: String) = Cached(id) {
     Action.async { request =>
+      val searchUtil = new SearchUtils with RemoteClientFromConfig with ResultToJson with UrlFromConfig with BoosFromConfigFile
       async {
-        await { searchUtil.similiar(id) } match {
+        val result = await { searchUtil.similiar(id) }
+        searchUtil.client.close
+        result match {
           case Some(js) => Ok(js)
           case None     => emptyResult
         }
