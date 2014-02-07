@@ -4,7 +4,7 @@ import time
 from PyQt4.QtCore import *
 from PyQt4.QtGui import *
 from PyQt4.QtWebKit import *
-
+import os
 
 class Screenshot(QWebView):
     def __init__(self):
@@ -42,8 +42,9 @@ class Screenshot(QWebView):
 
 def capture(filename, url):
     s = Screenshot()
-    print(filename)
-    s.capture(url, filename)
+    tmp_name = filename = ".jpg"
+    s.capture(url, tmp_name)
+    os.rename(tmp_name, filename)
 
 
 if __name__ == "__main__":	

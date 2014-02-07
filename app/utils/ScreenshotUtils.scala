@@ -16,9 +16,9 @@ import scala.io.Source._
 import java.io.BufferedInputStream
 class ScreenshotUtils {
   this: SearchClientContainer with UrlContainer =>
+  val currentLocation = System.getProperty("user.dir")
   private def serveFile(docId: String) = {
-    val currentLocation = System.getProperty("user.dir")
-    val destination = s"$currentLocation/screenshots/$docId.jpg"
+    val destination = s"$currentLocation/screenshots/$docId"
     try {
       Some(new java.io.FileInputStream(destination))
     } catch {
@@ -29,42 +29,19 @@ class ScreenshotUtils {
     async {
       val doc = await { client.execute(get id docId from "lr/lr_doc") }
       val siteUrl = doc.getSource().get("url").asInstanceOf[String]
-      val currentLocation = System.getProperty("user.dir")
-      val destination = s"$currentLocation/screenshots/$docId.jpg"
+      val destination = s"$currentLocation/screenshots/$docId"
       val exec = s"xvfb-run --auto-servernum --server-num=1 python $currentLocation/screenshots.py $siteUrl $destination"
       val result = exec.!!
       serveFile(docId)
     }
   }
-  private def getFromCouchdb(docId: String) = {
-    async {
-      val std = url(dbUrl) / docId / "screenshot.jpeg"
-      val resp = await { Http(std) }
-      resp.getStatusCode() match {
-        case 200 =>
-          val currentLocation = System.getProperty("user.dir")
-          val destination = s"$currentLocation/screenshots/$docId.jpg"
-          val outFile = new java.io.FileOutputStream(destination)
-          val remoteFile = resp.getResponseBodyAsStream()
-          try {
-            var buffer = new Array[Byte](256)
-            while(remoteFile.read(buffer) > 0){
-              outFile.write(buffer)
-            }
-          } finally {
-            outFile.close()
-          }
-          remoteFile.reset()
-          Some(remoteFile)
-        case _ => await { takeScreenShot(docId) }
-      }
-    }
-  }
   private def getScreenShot(docId: String): Future[Option[InputStream]] = {
     async {
+      //try to serve the file from disk
       serveFile(docId) match {
         case Some(data) => Some(data)
-        case None       => await { getFromCouchdb(docId) }
+        //if not found take pic and save to disk
+        case None       => await { takeScreenShot(docId) }
       }
     }
   }
@@ -72,4 +49,4 @@ class ScreenshotUtils {
     if (docId == "{{result._id}}") Future(None)
     else getScreenShot(docId)
   }
-}	
+}		
