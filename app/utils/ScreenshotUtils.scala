@@ -14,38 +14,39 @@ import scalax.io._
 import scala.io._
 import scala.io.Source._
 import java.io.BufferedInputStream
+import java.io.File
 class ScreenshotUtils {
   this: SearchClientContainer with UrlContainer =>
   val currentLocation = System.getProperty("user.dir")
-  private def serveFile(docId: String) = {
+  private def serveFile(docId: String): Option[File] = {
     val destination = s"$currentLocation/screenshots/$docId"
     try {
-      Some(new java.io.FileInputStream(destination))
+      val f = new java.io.File(destination)
+      if (f.exists()) Some(f) else None
     } catch {
       case t: Throwable => None
     }
   }
-  private def takeScreenShot(docId: String): Future[Option[InputStream]] = {
-    async {
-      val doc = await { client.execute(get id docId from "lr/lr_doc") }
-      val siteUrl = doc.getSource().get("url").asInstanceOf[String]
-      val destination = s"$currentLocation/screenshots/$docId"
-      val exec = s"xvfb-run --auto-servernum --server-num=1 python $currentLocation/screenshots.py $siteUrl $destination"
-      val result = exec.!!
-      serveFile(docId)
-    }
+  private def takeScreenShot(docId: String, siteUrl: String): Option[File] = {
+    val destination = s"$currentLocation/screenshots/$docId"
+    val exec = s"xvfb-run --auto-servernum --server-num=1 python $currentLocation/screenshots.py $siteUrl $destination"
+    val result = exec.!!
+    serveFile(docId)
   }
-  private def getScreenShot(docId: String): Future[Option[InputStream]] = {
+  private def getScreenShot(docId: String): Future[Option[File]] = {
     async {
       //try to serve the file from disk
       serveFile(docId) match {
         case Some(data) => Some(data)
         //if not found take pic and save to disk
-        case None       => await { takeScreenShot(docId) }
+        case None =>
+          val doc = await { client.execute(get id docId from "lr/lr_doc") }
+          val siteUrl = doc.getSource().get("url").asInstanceOf[String]
+          takeScreenShot(docId, siteUrl)
       }
     }
   }
-  def getScreenshot(docId: String): Future[Option[InputStream]] = {
+  def getScreenshot(docId: String): Future[Option[File]] = {
     if (docId == "{{result._id}}") Future(None)
     else getScreenShot(docId)
   }

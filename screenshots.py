@@ -42,14 +42,13 @@ class Screenshot(QWebView):
 
 def capture(filename, url):
     s = Screenshot()
-    tmp_name = filename = ".jpg"
+    tmp_name = filename + ".jpg"
     s.capture(url, tmp_name)
     os.rename(tmp_name, filename)
 
 
 if __name__ == "__main__":	
-    args = sys.argv
-    print(args)
+    args = sys.argv    
     filename = args[2]
     url = args[1]    
     capture(filename, url)
