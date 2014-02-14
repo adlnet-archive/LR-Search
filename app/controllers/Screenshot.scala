@@ -10,9 +10,9 @@ import play.api.libs.iteratee.Enumerator
 import traits._
 
 object Screenshot extends Controller {
+  val screenShotUtil: ScreenshotUtils = new ScreenshotUtils with RemoteClientFromConfig with UrlFromConfig
   def getScreenshot(docId: String) = Action.async { request =>
     async {
-      val screenShotUtil: ScreenshotUtils = new ScreenshotUtils with RemoteClientFromConfig with UrlFromConfig
       val result = await { screenShotUtil.getScreenshot(docId) }
       result match {
         case Some(d) => SimpleResult(

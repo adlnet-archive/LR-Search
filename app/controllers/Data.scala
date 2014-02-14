@@ -11,46 +11,42 @@ import play.Logger
 import utils._
 import traits._
 import scala.collection.JavaConversions._
-import com.sksamuel.elastic4s.ElasticClient
 import org.elasticsearch.action.get.GetResponse
 import views.html.defaultpages.notFound
 import play.api.libs.iteratee.Enumerator
 import play.api.cache.Cached
-object Data extends Controller {  
+object Data extends Controller {
+  val dataUtil = new DataUtils with RemoteClientFromConfig with ResultToJson with UrlFromConfig
   val emptyResult = Ok(Json.toJson(Map(
     "count" -> Json.toJson(0),
     "data" -> Json.toJson(Seq[String]()))))
   def data(keys: Option[String]) =
-    Action.async { request =>
-      async {
-        val dataUtil = new DataUtils with RemoteClientFromConfig with ResultToJson with UrlFromConfig
-        keys match {
-          case Some(docIds) =>
-            val firstParse = java.net.URLDecoder.decode(docIds, "utf-8").replace("\\\"", "\"")
-            val docs = Json.parse(firstParse).as[Seq[String]]
-            val result = await { dataUtil.docs(docs) }
-            dataUtil.client.close
-            result match {
-              case Some(js) => Ok(js)
-              case None => emptyResult
+    Cached("data" + keys.getOrElse("")) {
+      Action.async { request =>
+        async {
+          keys match {
+            case Some(docIds) =>
+              val firstParse = java.net.URLDecoder.decode(docIds, "utf-8").replace("\\\"", "\"")
+              val docs = Json.parse(firstParse).as[Seq[String]]
+              val result = await { dataUtil.docs(docs) }
+              result match {
+                case Some(js) => Ok(js)
+                case None => emptyResult
 
-            }
-          case None =>
-            val result = await { dataUtil.data }
-            dataUtil.client.close
-            Ok(Json.toJson(Map("doc_count" -> Json.toJson(result.getCount()))))
+              }
+            case None =>
+              val result = await { dataUtil.data }
+              Ok(Json.toJson(Map("doc_count" -> Json.toJson(result.getCount()))))
+          }
         }
       }
     }
-
   def doc(docId: String) =
     Action.async { request =>
       async {
-        val dataUtil = new DataUtils with RemoteClientFromConfig with ResultToJson with UrlFromConfig
         docId.toLowerCase() match {
           case "sitemap" => {
             val r = await { dataUtil.docFromCouchdb(docId) }
-            dataUtil.client.close
             SimpleResult(header = ResponseHeader(200, Map("Content-Type" -> "application/json")),
               body = Enumerator.fromStream(r, 256))
           }

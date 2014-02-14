@@ -8,6 +8,7 @@ import play.Logger
 import utils._
 import play.api.libs.iteratee.Enumerator
 import play.api.cache.Cached
+import play.api.Play.current
 import traits.UrlFromConfig
 import scala.async.Async.{ async, await }
 object Standards extends Controller {
@@ -19,7 +20,6 @@ object Standards extends Controller {
         SimpleResult(
           header = ResponseHeader(200, Map("Content-Type" -> "application/json")),
           body = Enumerator.fromStream(data, 256))
-
       }
     }
 
@@ -32,4 +32,5 @@ object Standards extends Controller {
           body = Enumerator.fromStream(data, 256))
       }
     }
+
 }
