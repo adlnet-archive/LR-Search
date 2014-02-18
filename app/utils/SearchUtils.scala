@@ -100,7 +100,8 @@ class SearchUtils {
         }
       }
     async {
-      val svc = url(dbUrl) / "_design" / "standards" / "_list" / "just-values" / "children" <<? Map("key" -> ("\"" + standard + "\""), "stale" -> "update_after")
+      val svc = url(standardsUrl) / "_design" / "standards" / "_list" / "just-values" / "children" <<? Map("key" -> ("\"" + standard + "\""), "stale" -> "update_after")      
+      println(svc.url)
       val result: Either[Throwable, Response] = await { Http(svc).either }
       result match {
         case Left(t) =>

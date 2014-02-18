@@ -6,26 +6,36 @@ angular
 					return {
 						query : "",
 						page : 0,
-						searchUrl : "",
+						searchUrl : "all",
+						contentType : null,
 						searchResults : [],
 						broadcastResults : function(data) {
-							this.searchResults = this.searchResults.concat(data);
-							$rootScope.$broadcast("searchComplete",this.searchResults);
+							this.searchResults = this.searchResults
+									.concat(data);
+							$rootScope.$broadcast("searchComplete",
+									this.searchResults);
 						},
 						loadPage : function() {
 							var self = this;
+							var p = {
+								terms : this.query,
+								page : this.page
+							};
+							if (this.contentType && this.contentType !== "all") {
+								p.contentType = this.contentType;
+							}
 							$http.get(this.searchUrl + "search", {
-								params : {
-									terms : this.query,
-									page : this.page
-								}
-							}).then(function(data){
-								var data = data.data.data.map(function(item){
-									item.screenShotUrl = self.searchUrl + "screenshot/" + item._id;
-									return item;
-								});								
-								self.broadcastResults(data);
-							});
+								params : p
+							}).then(
+									function(data) {
+										var data = data.data.data.map(function(
+												item) {
+											item.screenShotUrl = self.searchUrl
+													+ "screenshot/" + item._id;
+											return item;
+										});
+										self.broadcastResults(data);
+									});
 							this.page++;
 						},
 						search : function() {
@@ -33,7 +43,7 @@ angular
 							this.page = 0;
 							this.loadPage();
 						},
-						loadNextPage: function() {
+						loadNextPage : function() {
 							this.loadPage();
 						},
 						similiar : function(docId) {
@@ -98,5 +108,21 @@ angular
 								+ '</dd>'
 								+ '</dl>'
 								+ '<button ng-click="next()" class="btn">Next</button>'
+					}
+				})
+		.directive(
+				"lrheader",
+				function() {
+					return {
+						restrict : "E",
+						transclude : true,
+						scope : {},
+						controller : function($scope, searchService) {
+							$scope.contentTypes = [ "photo", "video", "book" ];
+							$scope.select = function() {
+
+							};
+						},
+						template : '<ul ng-repeat="ct in contentTypes" class="nav navbar-nav"><li><a href="#/{{ct}}">{{ct}}</a></li></ul>'
 					}
 				});
