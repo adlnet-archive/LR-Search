@@ -23,10 +23,10 @@ class SearchUtils {
       def mapFunc(f: String) = {
         val accessModeFilter = queryFilter(matches("accessMode", f))
         val mediaFeaturesFilter = queryFilter(matches("mediaFeatures", f))
-        should(accessModeFilter, mediaFeaturesFilter)
+        List(accessModeFilter, mediaFeaturesFilter)
       }
-    val queries = accessibiltiyOptions.map(mapFunc)
-    must(queries: _*)
+    val queries = accessibiltiyOptions.flatMap(mapFunc)
+    should(queries: _*)
   }
   def processAccessibilityAndContentType(accessibility: Seq[String], contentType: String) = {
     must(queryFilter(matches("keys", contentType)), processAccessibilityMetadata(accessibility))
