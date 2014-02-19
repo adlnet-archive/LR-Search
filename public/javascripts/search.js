@@ -98,15 +98,17 @@ angular
 								searchService.loadNextPage();
 							}
 						},
-						template : '<dl ng-repeat="result in results">'
-								+ '<dt><a href="{{result.url}}">{{result.title}}</a></dt>'
-								+ '<dd>'
-								+ '<a href="{{result.url}}"><img src="{{result.screenShotUrl}}"/></a><br/>'
+						template : '<ul class="media-list">'
+								+ '<li class="media" ng-repeat="result in results">'
+								+ '<a href="{{result.url}}" class="pull-left"><img class="media-object" src="{{result.screenShotUrl}}" style="width: 171px; height: 180px;"/></a>'
+								+ '<div class="media-body">'
+								+ '<h3 class="media-heading"><a href="{{result.url}}">{{result.title}}</a></h3>'
 								+ '<p class="text-muted">{{result.url}}</p>'
 								+ '<p>{{result.description}}</p>'
 								+ '<a href="#/review/{{result._id}}" class="text-muted">Review</a>'
-								+ '</dd>'
-								+ '</dl>'
+								+ '</div>'
+								+ '</li>'
+								+ '</ul>'
 								+ '<button ng-click="next()" class="btn">Next</button>'
 					}
 				})
@@ -118,11 +120,15 @@ angular
 						transclude : true,
 						scope : {},
 						controller : function($scope, searchService) {
-							$scope.contentTypes = [ "photo", "video", "book" ];
-							$scope.select = function() {
-
+							$scope.contentTypes = [ "all", "photo", "video",
+									"book" ];
+							$scope.select = function(value) {
+								console.log(searchService.contentType);
+								searchService.contentType = value;
+								console.log(searchService.contentType);
+								searchService.search();
 							};
 						},
-						template : '<ul ng-repeat="ct in contentTypes" class="nav navbar-nav"><li><a href="#/{{ct}}">{{ct}}</a></li></ul>'
+						template : '<ul ng-repeat="ct in contentTypes" class="nav navbar-nav"><li><a ng-click="select(ct);" style="cursor:pointer;">{{ct}}</a></li></ul>'
 					}
 				});

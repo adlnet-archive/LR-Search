@@ -20,11 +20,11 @@ class SearchUtils {
   this: SearchClientContainer with ResultFormatter[JsValue] with UrlContainer with BoostContainer =>
   val pageSize = 25
   def processAccessibilityMetadata(accessibiltiyOptions: Seq[String]) = {
-      def mapFunc(f: String) = {
-        val accessModeFilter = queryFilter(matches("accessMode", f))
-        val mediaFeaturesFilter = queryFilter(matches("mediaFeatures", f))
-        List(accessModeFilter, mediaFeaturesFilter)
-      }
+    def mapFunc(f: String) = {
+      val accessModeFilter = queryFilter(matches("accessMode", f))
+      val mediaFeaturesFilter = queryFilter(matches("mediaFeatures", f))
+      List(accessModeFilter, mediaFeaturesFilter)
+    }
     val queries = accessibiltiyOptions.flatMap(mapFunc)
     should(queries: _*)
   }
@@ -83,30 +83,28 @@ class SearchUtils {
     }.map(format)
   }
   def searchLR(standard: String, page: Int, filter: Option[Seq[String]], contentType: Option[String], accessibilityOptions: Option[Seq[String]]): Future[Option[JsValue]] = {
-      def runQuery(s: List[String]): Future[Option[JsValue]] = {
-        client.execute(search in indexName start (page * pageSize) limit pageSize query {
-          customScore script "_score + (doc.containsKey('paraScore') ? doc['paraScore'].value : 0)" lang "mvel" query createQuery(s, filter, accessibilityOptions, contentType) boost 1
-        }).map(format)
-      }
-      def processExpandedQuery(result: Response) = {
-        async {
-          val rawBody = result.getResponseBody()
-          val rawStandards = JSON.parseRaw(rawBody)
-          rawStandards match {
-            case Some(js: JSONObject) => await { runQuery(List(standard)) }
-            case Some(js: JSONArray)  => await { runQuery(standard :: js.asInstanceOf[JSONArray].list.map(_.toString)) }
-            case None                 => None
-          }
+    def runQuery(s: List[String]): Future[Option[JsValue]] = {
+      client.execute(search in indexName start (page * pageSize) limit pageSize query {
+        customScore script "_score + (doc.containsKey('paraScore') ? doc['paraScore'].value : 0)" lang "mvel" query createQuery(s, filter, accessibilityOptions, contentType) boost 1
+      }).map(format)
+    }
+    def processExpandedQuery(result: Response) = {
+      async {
+        val rawBody = result.getResponseBody()
+        val rawStandards = JSON.parseRaw(rawBody)
+        rawStandards match {
+          case Some(js: JSONObject) => await { runQuery(List(standard)) }
+          case Some(js: JSONArray) => await { runQuery(standard :: js.asInstanceOf[JSONArray].list.map(_.toString)) }
+          case None => None
         }
       }
+    }
     async {
-      val svc = url(standardsUrl) / "_design" / "standards" / "_list" / "just-values" / "children" <<? Map("key" -> ("\"" + standard + "\""), "stale" -> "update_after")      
+      val svc = url(standardsUrl) / "_design" / "standards" / "_list" / "just-values" / "children" <<? Map("key" -> ("\"" + standard + "\""), "stale" -> "update_after")
       println(svc.url)
       val result: Either[Throwable, Response] = await { Http(svc).either }
       result match {
-        case Left(t) =>
-          Logger.error("Error pulling standards from couchdb", t)
-          None
+        case Left(t) => None
         case Right(result) => await { processExpandedQuery(result) }
       }
     }
