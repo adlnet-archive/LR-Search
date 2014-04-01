@@ -83,9 +83,14 @@ class SearchUtils {
     }.map(format)
   }
   def searchLR(standard: String, page: Int, filter: Option[Seq[String]], contentType: Option[String], accessibilityOptions: Option[Seq[String]]): Future[Option[JsValue]] = {
+    def customRank(s: List[String]): String = {
+      "_score + (doc.containsKey('paraScore') ? doc['paraScore'].value : 0)" +
+        (if (s.foldLeft(false)((p, n) => p || n.toLowerCase().contains("bookshare.org") || n.toLowerCase().contains("bookshare"))) ""  
+        else " + (doc['url'].value.contains('bookshare.org') ? -10 : 0)")
+    }
     def runQuery(s: List[String]): Future[Option[JsValue]] = {
       client.execute(search in indexName start (page * pageSize) limit pageSize query {
-        customScore script "_score + (doc.containsKey('paraScore') ? doc['paraScore'].value : 0)" lang "mvel" query createQuery(s, filter, accessibilityOptions, contentType) boost 1
+        customScore script customRank(s) lang "mvel" query createQuery(s, filter, accessibilityOptions, contentType) boost 1
       }).map(format)
     }
     def processExpandedQuery(result: Response) = {
@@ -101,7 +106,6 @@ class SearchUtils {
     }
     async {
       val svc = url(standardsUrl) / "_design" / "standards" / "_list" / "just-values" / "children" <<? Map("key" -> ("\"" + standard + "\""), "stale" -> "update_after")
-      println(svc.url)
       val result: Either[Throwable, Response] = await { Http(svc).either }
       result match {
         case Left(t) => None

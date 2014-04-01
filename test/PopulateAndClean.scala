@@ -30,7 +30,10 @@ trait PopulateAndClean {
     if (i % 10 == 0) publisher else ""
   }
   def generateParaScore(i: Int) = {
-    if(i % 9 == 0) Float.MaxValue else 0.0
+    if (i % 9 == 0) Float.MaxValue else 0.0
+  }
+  def generateUrl(i: Int) = {
+    if (i % 9 == 0) ("http://bookshare.org/" + i) else ("http://example.com/" + i)
   }
   def createDocument(i: Int) = {
     Map(
@@ -38,6 +41,7 @@ trait PopulateAndClean {
       "description" -> ("desc " + i),
       "publisher" -> generatePublisher(i),
       "keys" -> generateKeys(i).toArray,
+      "url" -> generateUrl(i),
       "mediaFeatures" -> generateMediaFeatures(i).toArray,
       "accessMode" -> generateAccessMode(i).toArray,
       "standards" -> generateStandards(i).toArray,
