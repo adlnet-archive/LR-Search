@@ -39,6 +39,7 @@ trait ResultToJson extends ResultFormatter[JsValue] {
   }
   def format(hits: SearchResponse): Option[JsValue] = {
     val h = hits.getHits()
+    println(hits.getHits())
     if (h.totalHits() > 0) {
       Some(Json.toJson(Map(
         "count" -> Json.toJson(h.totalHits()),

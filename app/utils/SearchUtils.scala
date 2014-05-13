@@ -85,13 +85,18 @@ class SearchUtils {
   def searchLR(standard: String, page: Int, filter: Option[Seq[String]], contentType: Option[String], accessibilityOptions: Option[Seq[String]]): Future[Option[JsValue]] = {
     def customRank(s: List[String]): String = {
       "_score + (doc.containsKey('paraScore') ? doc['paraScore'].value : 0)" +
-        (if (s.foldLeft(false)((p, n) => p || n.toLowerCase().contains("bookshare.org") || n.toLowerCase().contains("bookshare"))) ""  
+        (if (s.foldLeft(false)((p, n) => p || n.toLowerCase().contains("bookshare.org") || n.toLowerCase().contains("bookshare"))) ""
         else " + (doc['url'].value.contains('bookshare.org') ? -10 : 0)")
     }
     def runQuery(s: List[String]): Future[Option[JsValue]] = {
-      client.execute(search in indexName start (page * pageSize) limit pageSize query {
-        customScore script customRank(s) lang "mvel" query createQuery(s, filter, accessibilityOptions, contentType) boost 1
-      }).map(format)
+      async {
+        val result = await {
+          client.execute(search in indexName start (page * pageSize) limit pageSize query {
+            createQuery(s, filter, accessibilityOptions, contentType)
+          })
+        }
+        format(result)
+      }
     }
     def processExpandedQuery(result: Response) = {
       async {
@@ -108,13 +113,13 @@ class SearchUtils {
       val svc = url(standardsUrl) / "_design" / "standards" / "_list" / "just-values" / "children" <<? Map("key" -> ("\"" + standard + "\""), "stale" -> "update_after")
       val result: Either[Throwable, Response] = await { Http(svc).either }
       result match {
-        case Left(t) => None
+        case Left(t) => await { runQuery(List(standard)) }
         case Right(result) => await { processExpandedQuery(result) }
       }
     }
   }
   def searchByPublisher(publisher: String, page: Int): Future[Option[JsValue]] = {
-    client.execute(search in indexName start (page * pageSize) limit pageSize query {
+    client.execute(search in indexName -> documentType start (page * pageSize) limit pageSize query {
       matchPhrase("publisher", publisher)
     }).map(format)
   }

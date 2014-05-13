@@ -18,3 +18,4 @@ dist
 *.class
 /target
 /data
+/.target

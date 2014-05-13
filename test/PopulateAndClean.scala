@@ -49,9 +49,10 @@ trait PopulateAndClean {
   }
   def before = {
     val items = for { i <- 1 until 200 } yield index into s"$currentIndexName/$currentDocumentType" id ("8851143037d629a57579139adcf7600" + i) fields (createDocument(i))
+    
     val finalResult = Await result (_client.bulk(items: _*), duration)
   }
   def after = {
-    val r = Await result (_client deleteIndex s"$currentIndexName/$currentDocumentType", duration)
+        val r = Await result (_client deleteIndex s"$currentIndexName/$currentDocumentType", duration)
   }
 }
