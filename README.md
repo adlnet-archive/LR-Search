@@ -10,6 +10,10 @@ It is accessible at ```/search```
 
 It supports a number of query string params
 
-| Param | Description        |
-|------:|:------------------:|
-|terms  |phrase to search for|
+| Param | Description                   | Required |
+|:------|:-----------------------------|:---------:|
+|terms  |phrase to search for           |true|
+|filter |generic filter for results     |false|
+|page   |0 based index for paged results|false|
+|contentType|filter specifically for content type|false|
+|accessibility|filter for accessibility metadata as defined in LRMI|false|
