@@ -17,3 +17,23 @@ It supports a number of query string params
 |page   |0 based index for paged results|false|
 |contentType|filter specifically for content type|false|
 |accessibility|filter for accessibility metadata as defined in LRMI|false|
+
+The response format for the search results is as follows
+
+```json
+{
+
+    "count": 1,
+    "data": [
+        {
+            "hasScreenshot": true,
+            "url": "http://www.example.com,
+            "accessibilityFeature": [ ],
+            "description": "Sampel Description for content",
+            "_id": "1e4b2d8ec9849beffedef9ddc392f2b1",
+            "publisher": "Sample Publisher",
+            "title": "Sample Title"
+        }
+    ]
+}
+```
