@@ -82,9 +82,39 @@ If you have the ID for a document in the system you can access it's metadata via
 You can either supply the ID as ```/data/{id}``` or you can get multiple documents via ```/data?keys={ids}``` where ids is a json encoded
 list of IDs
 
+If you request multiple documents the response will be formated as
 
+```json
+{
 
+    "count": 1,
+    "data": [
+        {
+            "hasScreenshot": true,
+            "url": "http://www.example.com",
+            "accessibilityFeature": [ ],
+            "description": "Sampel Description for content",
+            "_id": "1e4b2d8ec9849beffedef9ddc392f2b1",
+            "publisher": "Sample Publisher",
+            "title": "Sample Title"
+        }
+    ]
+}
+```
 
+If you requests a single ID the response will be formated as
+
+```json
+{
+    "hasScreenshot": true,
+    "url": "http://www.example.com",
+    "accessibilityFeature": [ ],
+    "description": "Sampel Description for content",
+    "_id": "1e4b2d8ec9849beffedef9ddc392f2b1",
+    "publisher": "Sample Publisher",
+    "title": "Sample Title"
+}
+```
 
 
 
