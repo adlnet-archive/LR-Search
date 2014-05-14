@@ -50,6 +50,30 @@ The ```/screenshot/{id}``` endpoint returns a screenshot of resource linked to t
 404 errors can occur for a number of reason, the most common being that the image is not cached, and creating the screenshot times out while accessing the remote site
 
 
+# Standards API
+
+The standards API exposes date concerning Common Core standards
+
+The ```/new/standards``` endpoint returns a list of all the Common Core standards the system knows about
+
+```json
+[
+    "standard"
+]
+```
+
+The ```/new/standards/{id}``` endpoint returns all the Common Core standards for the supplied ID
+
+```json
+{
+    "title": "title",
+    "description": "description"
+    "id": "id"
+    "children": [...]
+}
+```
+
+Where the contents of ```children``` have the same structure as the parent node
 
 
 
