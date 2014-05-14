@@ -75,7 +75,12 @@ The ```/new/standards/{id}``` endpoint returns all the Common Core standards for
 
 Where the contents of ```children``` have the same structure as the parent node
 
+# Data API
 
+If you have the ID for a document in the system you can access it's metadata via the ```/data``` endpoint
+
+You can either supply the ID as ```/data/{id}``` or you can get multiple documents via ```/data?keys={ids}``` where ids is a json encoded
+list of IDs
 
 
 
