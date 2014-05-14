@@ -27,7 +27,7 @@ The response format for the search results is as follows
     "data": [
         {
             "hasScreenshot": true,
-            "url": "http://www.example.com,
+            "url": "http://www.example.com",
             "accessibilityFeature": [ ],
             "description": "Sampel Description for content",
             "_id": "1e4b2d8ec9849beffedef9ddc392f2b1",
