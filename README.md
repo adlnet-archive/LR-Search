@@ -67,8 +67,8 @@ The ```/new/standards/{id}``` endpoint returns all the Common Core standards for
 ```json
 {
     "title": "title",
-    "description": "description"
-    "id": "id"
+    "description": "description",
+    "id": "id",
     "children": [...]
 }
 ```
