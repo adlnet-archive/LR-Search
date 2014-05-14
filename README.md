@@ -37,3 +37,27 @@ The response format for the search results is as follows
     ]
 }
 ```
+
+# Screenshot API
+
+The ```/screenshot/{id}``` endpoint returns a screenshot of resource linked to the ID paraameter
+
+|Status|cause|
+|:----:|:---:|
+|200|normal|
+|404|screenshot not available|
+
+404 errors can occur for a number of reason, the most common being that the image is not cached, and creating the screenshot times out while accessing the remote site
+
+
+
+
+
+
+
+
+
+
+
+
+
