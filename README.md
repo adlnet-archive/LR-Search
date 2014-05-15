@@ -24,7 +24,6 @@ The response format for the search results is as follows
 
 ```json
 {
-
     "count": 1,
     "data": [
         {
@@ -88,7 +87,6 @@ If you request multiple documents the response will be formated as
 
 ```json
 {
-
     "count": 1,
     "data": [
         {
