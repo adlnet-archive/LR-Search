@@ -2,6 +2,8 @@ LR Search
 ========
 [![Build Status](https://travis-ci.org/adlnet/LR-Search.png?branch=master)](https://travis-ci.org/adlnet/LR-Search)
 
+This project is a companion to [LR-Data](https://github.com/adlnet/LR-Data) and acts as a set of search and data services for the ElasticSearch built by LR-Data.
+
 # Search API
 
 This is the primary API endpoint for searching the Learning Registry
@@ -12,7 +14,7 @@ It supports a number of query string params
 
 | Param | Description                   | Required |
 |:------|:-----------------------------|:---------:|
-|terms  |phrase to search for           |true|
+|terms  |phrase to search for, or a Common Core standards ID           |true|
 |filter |generic filter for results     |false|
 |page   |0 based index for paged results|false|
 |contentType|filter specifically for content type|false|
