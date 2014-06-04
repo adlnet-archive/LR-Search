@@ -41,7 +41,7 @@ The response format for the search results is as follows
 
 # Screenshot API
 
-The ```/screenshot/{id}``` endpoint returns a screenshot of resource linked to the ID paraameter
+The ```/screenshot/{id}``` endpoint returns a screenshot of resource linked to the ID parameter
 
 |Status|cause|
 |:----:|:---:|
